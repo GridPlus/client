@@ -1,6 +1,7 @@
 #!/bin/bash
-
+mkdir bin
 export GOPATH="$(pwd -P)"
+export GOBIN=$GOPATH/bin
 
 echo "Fetching packages..."
 cd src && go get && cd ..
