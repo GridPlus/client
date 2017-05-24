@@ -1,16 +1,17 @@
 # Grid+ Client
-This repo contains the Grid+ client, which is a binary that is meant to live on
-the smart agent device (any small system-on-a-chip capable of running this binary).
+This repo contains the Grid+ client, which is a binary meant to live on
+the smart agent device (any small system-on-a-chip). Once the agent is registered and claimed
+by a human owner, the client will receive data periodically from our hub. 
+Based on this data, the client may choose to reply to the hub with signed messages that move tokens
+owned by the device.
+
+## Prerequisites
+
+You will need a UNIX shell (i.e. OSX or Linux). You will also need to have Go installed. If you are on OSX, you can do this with homebrew (`brew install golang`).
 
 ## Installation
 
-You will need to have Go installed. Once you do, you will need to generate a
-setup key. With which your device will be registered. The registration process
-will need to interface with our hub API.
-
-*NOTE: This is not yet possible.In the future, we will provide a signup process to test our demo app.*
-
-To generate the setup key, run:
+The installation process first generates a setup key. This setup key must be registered with the Grid+ registry contract (which is not yet available to the public). To generate your setup key and build your binaries, run:
 
 ```
 bash install.sh
@@ -19,7 +20,8 @@ bash install.sh
 This will install the prerequisites (via `go get`) and then it will generate a
 private key for your simulated device and put it in the proper config file.
 
-To install the Grid+ client, run:
+You can now run the client with:
+
 ```
 bash run.sh
 ```
