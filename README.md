@@ -40,3 +40,6 @@ This is likely an issue with fetching go-ethereum. OSX and Ubuntu 16.04 should b
 
 ### My client says "Waiting for registration..." forever
 It is waiting for you to claim it. You may do so on our web portal. *NOTE: This is not yet possible. Coming soon.*
+
+### getsockopt: connection refused
+You cannot hit the RPC provider.

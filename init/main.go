@@ -27,7 +27,7 @@ func writeKeyFile() {
   }
   defer f.Close()
 
-  var s = fmt.Sprintf("[battery]\naddr = \"%s\"\npkey = \"%s\"", addr, pkey)
+  var s = fmt.Sprintf("[agent]\naddr = \"%s\"\npkey = \"%s\"", addr, pkey)
   _, err2 := f.WriteString(s)
   if err2 != nil {
     log.Panic("Could not write your address or pkey")

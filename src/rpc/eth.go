@@ -64,15 +64,15 @@ func CheckRegistered(setup_addr string, registry string) (bool) {
 
 
 /**
- * Check if the setup address has been claimed by a human owner.
+ * Check if the wallet address has been claimed by a human owner.
  *
- * @param setup_addr    The original setup address for the agent
- * @param registry      Address of the registry contract
- * @return              true if registerd, false if not
+ * @param wallet_addr    The original setup address for the agent
+ * @param registry       Address of the registry contract
+ * @return               true if registerd, false if not
  */
-func CheckClaimed(setup_addr string, registry string) (bool) {
+func CheckClaimed(wallet_addr string, registry string) (bool) {
   // claimed(address) --> c884ef83
-  call := Call{To: registry, Data: "0xc884ef83"+Zfill(unprefix(setup_addr))}
+  call := Call{From: wallet_addr, To: registry, Data: "0xc884ef83"+Zfill(unprefix(wallet_addr))}
   claimed, err := client.Eth_call(call)
   if err != nil {
     log.Fatal("Could not check if agent was claimed: ", err)

@@ -9,12 +9,12 @@ import (
 type Config struct {
   API string                    // Host of the Grid+ API
   Provider string               // RPC provider (including port)
-  SerialNo string               // Serial number of the battery
-  SetupPkey string              // Battery's private key (for setup)
+  SerialNo string               // Serial number of the agent
+  SetupPkey string              // Agent's private key (for setup)
   SetupAddr string              // Ethereum address corresponding to private key
   WalletKeyPath string          // Absolute file path for wallet key file
-  WalletPkey string             // Battery's permanent wallet key (for moving tokens)
-  WalletAddr string             // Battery's wallet address
+  WalletPkey string             // Agent's permanent wallet key (for moving tokens)
+  WalletAddr string             // Agent's wallet address
 }
 
 // Load the config file and get system-level parameters
@@ -41,8 +41,8 @@ func Load() (Config) {
     if err2 != nil {
       log.Fatal("Could not find crypto keypair at 'config/setup_keys.toml'")
     } else {
-      _config.SetupPkey = viper.GetString("battery.pkey")
-      _config.SetupAddr = viper.GetString("battery.addr")
+      _config.SetupPkey = viper.GetString("setup.pkey")
+      _config.SetupAddr = viper.GetString("setup.addr")
     }
 
     // Create (or get) wallet key
