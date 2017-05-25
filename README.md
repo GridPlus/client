@@ -1,7 +1,7 @@
 # Grid+ Client
 This repo contains the Grid+ client, which is a binary meant to live on
 the smart agent device (any small system-on-a-chip). Once the agent is registered and claimed
-by a human owner, the client will receive data periodically from our hub. 
+by a human owner, the client will receive data periodically from our hub.
 Based on this data, the client may choose to reply to the hub with signed messages that move tokens
 owned by the device.
 
@@ -37,3 +37,6 @@ You need to register your agent (with its setup key) via our demo web portal.
 
 #### install.sh fails to fetch packages
 This is likely an issue with fetching go-ethereum. OSX and Ubuntu 16.04 should be fine, but we have run into issues with Ubuntu 14.04. If you have a problem on another OS, please let us know.
+
+### My client says "Waiting for registration..." forever
+It is waiting for you to claim it. You may do so on our web portal. *NOTE: This is not yet possible. Coming soon.*

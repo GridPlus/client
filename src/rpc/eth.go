@@ -39,25 +39,45 @@ func ConnectToRPC(provider string) {
 
 
 /**
- * Check if an address is registered on the blockchain.
+ * Check if a setup address is registered on the blockchain.
  * Note that a setup address is registered by Grid+, but the device should
  * register a wallet, which will bump that original setup address off the
  * registry.
  *
  * We don't want to control user keys!
  *
- * @param addr        Address to check registration for
- * @param registry    Address of the registry contract
- * @return            true if registerd, false if not
+ * @param setup_addr    The original setup address for the agent
+ * @param registry      Address of the registry contract
+ * @return              true if registerd, false if not
  */
-func CheckRegistered(addr string, registry string) (bool) {
+func CheckRegistered(setup_addr string, registry string) (bool) {
   // registered(address) --> b2dd5c07
-  call := Call{From: addr, To: registry, Data: "0xb2dd5c07"+Zfill(unprefix(addr)) }
+  call := Call{From: setup_addr, To: registry, Data: "0xb2dd5c07"+Zfill(unprefix(setup_addr)) }
   registered, err := client.Eth_call(call)
   if err != nil {
-    log.Fatal("Could not check for battery in registry: ", err)
+    log.Fatal("Could not check if agent was registered: ", err)
   }
   pass, _ := strconv.ParseUint(registered, 0, 64)
+  if pass == 0 { return false }
+  return true
+}
+
+
+/**
+ * Check if the setup address has been claimed by a human owner.
+ *
+ * @param setup_addr    The original setup address for the agent
+ * @param registry      Address of the registry contract
+ * @return              true if registerd, false if not
+ */
+func CheckClaimed(setup_addr string, registry string) (bool) {
+  // claimed(address) --> c884ef83
+  call := Call{To: registry, Data: "0xc884ef83"+Zfill(unprefix(setup_addr))}
+  claimed, err := client.Eth_call(call)
+  if err != nil {
+    log.Fatal("Could not check if agent was claimed: ", err)
+  }
+  pass, _ := strconv.ParseUint(claimed, 0, 64)
   if pass == 0 { return false }
   return true
 }

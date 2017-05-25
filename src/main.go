@@ -22,7 +22,7 @@ func main() {
   add_wallet(conf.WalletAddr, conf.SetupAddr, conf.SetupPkey, registry_addr, conf.API)
 
   // System cannot proceed until agent is registered
-  //check_claimed(conf.WalletAddr, registry_addr)
+  check_claimed(conf.WalletAddr, registry_addr)
   // Authenticate the agent to use the API
   // auth_token := authenticate(conf.WalletAddr, conf.WalletPkey, conf.API)
   // Get the trading profile
@@ -96,7 +96,8 @@ func add_wallet(wallet_addr string, setup_addr string, setup_pkey string, regist
         add_wallet(wallet_addr, setup_addr, setup_pkey, registry, _api)
       }
     }
-
+  } else {
+    log.Println("Wallet already added.")
   }
   return
 }
@@ -109,17 +110,17 @@ func add_wallet(wallet_addr string, setup_addr string, setup_pkey string, regist
  * @param  _registry   Address of the registry contract
  */
 func check_claimed(_agent string, _registry string) {
-  // log.Println("Waiting for registration...")
-  // var reg = false
-  // for reg == false {
-  //   _reg := rpc.CheckRegistered(_agent, _registry)
-  //   if _reg != true {
-  //     time.Sleep(time.Second*10)
-  //   } else {
-  //     log.Println("Agent registration confirmed.")
-  //     reg = true
-  //   }
-  // }
+  log.Println("Waiting for registration...")
+  var reg = false
+  for reg == false {
+    _reg := rpc.CheckClaimed(_agent, _registry)
+    if _reg != true {
+      time.Sleep(time.Second*10)
+    } else {
+      log.Println("Agent registration confirmed.")
+      reg = true
+    }
+  }
 }
 
 
