@@ -30,7 +30,10 @@ bash run.sh
 
 Here are some common issues and solutions.
 
-#### panic: Agent's setup key was not registered by Grid+
+#### When I run the client, I see panic: Agent's setup key was not registered by Grid+
 
 You need to register your agent (with its setup key) via our demo web portal.
 *NOTE: This is not yet possible. Coming soon.*
+
+#### install.sh fails to fetch packages
+This is likely an issue with fetching go-ethereum. OSX and Ubuntu 16.04 should be fine, but we have run into issues with Ubuntu 14.04. If you have a problem on another OS, please let us know.
