@@ -43,12 +43,25 @@ func run(auth_token string, wallet string, hub string) {
   for true {
     // 1. Ping the hub and ask if there are any unpaid bills. This will return
     //    amounts and ids for the bills.
-    //
-    // 2. Total the unpaid bills and sign a message that will move that many
-    //    tokens to the address provided by the hub.
-    //
-    // 3. Send back the ids as well as the signed message.
-    log.Println("oh hello")
+    bills, err := api.GetBills(hub, auth_token)
+    if err != nil {
+      log.Println("Encountered error getting bills (%s)", err)
+    } else {
+      // 2. Total the unpaid bills and sign a message that will move that many
+      //    tokens to the address provided by the hub.
+      var unpaid_sum float64
+      var unpaid_bill_ids []int
+      for _, bill := range *bills {
+        unpaid_sum += bill.Amount
+        unpaid_bill_ids = append(unpaid_bill_ids, bill.BillId)
+      }
+
+      // 3. Send back the ids as well as the signed message.
+      log.Println("unpaid sum", unpaid_sum)
+      log.Println("unpaid_bill_ids", unpaid_bill_ids)
+    }
+
+    // Wait 10 seconds and execute again
     time.Sleep(time.Second*10)
   }
 }
