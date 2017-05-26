@@ -23,11 +23,34 @@ func main() {
 
   // System cannot proceed until agent is registered
   check_claimed(conf.WalletAddr, registry_addr)
+
   // Authenticate the agent to use the API
-  // auth_token := authenticate(conf.WalletAddr, conf.WalletPkey, conf.API)
-  // Get the trading profile
-  // profile := get_profile(auth_token, conf.API)
-  // log.Println("Profile numeraire", profile.Numeraire)
+  auth_token := authenticate(conf.WalletAddr, conf.WalletPkey, conf.API)
+
+  // Run program
+  run(auth_token, conf.WalletAddr, conf.API)
+}
+
+
+/**
+ * Main event loop. Periodically check API for data.
+ *
+ * @param auth_token    Used to query authenticated routes
+ * @param wallet        Wallet address (identifier of the device)
+ * @param hub           Full base url of the hub
+ */
+func run(auth_token string, wallet string, hub string) {
+  for true {
+    // 1. Ping the hub and ask if there are any unpaid bills. This will return
+    //    amounts and ids for the bills.
+    //
+    // 2. Total the unpaid bills and sign a message that will move that many
+    //    tokens to the address provided by the hub.
+    //
+    // 3. Send back the ids as well as the signed message.
+    log.Println("oh hello")
+    time.Sleep(time.Second*10)
+  }
 }
 
 
@@ -121,31 +144,6 @@ func check_claimed(_agent string, _registry string) {
       reg = true
     }
   }
-}
-
-
-/**
- * Get a profile from the API. This is a set of configuration parameters set
- * by the owner.
- *
- * @param  _token        JSON web token used to call authenticated API endpoints
- * @param  _api          Full base URI of the API
- * @return               Pointer to the Profile object returned from the API
- */
-func get_profile(_token string, _api string) (*api.Profile) {
-  log.Println("Waiting for trading profile...")
-  var profile = new(api.Profile)
-  for *profile == (api.Profile{}) {
-    _profile, err := api.GetProfile(_token, _api)
-    if err != nil {
-      log.Println(err)
-      time.Sleep(time.Second*10)
-    } else {
-      log.Println("Got trading profile.")
-      profile = _profile
-    }
-  }
-  return profile
 }
 
 
