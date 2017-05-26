@@ -2,14 +2,17 @@
 package config
 
 import (
+  "encoding/hex"
   "github.com/spf13/viper"
   "log"
+  "sig"
 )
 
 type Config struct {
   API string                    // Host of the Grid+ API
   Provider string               // RPC provider (including port)
   SerialNo string               // Serial number of the agent
+  HashedSerialNo string         // Keccak256 hash of SerialNo
   SetupPkey string              // Agent's private key (for setup)
   SetupAddr string              // Ethereum address corresponding to private key
   WalletKeyPath string          // Absolute file path for wallet key file
@@ -31,7 +34,6 @@ func Load() (Config) {
     // Get normal config data
     _config.API = viper.GetString("development.gridplus_api")
     _config.Provider = viper.GetString("development.rpc_provider")
-    _config.SerialNo = viper.GetString("development.serial_no")
     _config.WalletKeyPath = viper.GetString("wallet.key_path")
 
     // Get setup key
@@ -43,6 +45,12 @@ func Load() (Config) {
     } else {
       _config.SetupPkey = viper.GetString("setup.pkey")
       _config.SetupAddr = viper.GetString("setup.addr")
+
+      _config.SerialNo = viper.GetString("setup.serial")
+      hash := sig.Keccak256Hash([]byte(_config.SerialNo))
+      hash_str := hex.EncodeToString(hash)
+      _config.HashedSerialNo = hash_str
+      log.Println("hashed serial", _config.HashedSerialNo)
     }
 
     // Create (or get) wallet key

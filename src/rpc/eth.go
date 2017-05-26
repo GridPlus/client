@@ -39,20 +39,38 @@ func ConnectToRPC(provider string) {
 
 
 /**
- * Check if a setup address is registered on the blockchain.
- * Note that a setup address is registered by Grid+, but the device should
- * register a wallet, which will bump that original setup address off the
- * registry.
+ * Check if the serial number has been registered with the registry contract.
  *
- * We don't want to control user keys!
- *
- * @param setup_addr    The original setup address for the agent
- * @param registry      Address of the registry contract
- * @return              true if registerd, false if not
+ * @param from             The origin of the message
+ * @param hashed_serial    The original setup address for the agent
+ * @param registry         Address of the registry contract
+ * @return                 true if registerd, false if not
  */
-func CheckRegistered(setup_addr string, registry string) (bool) {
-  // registered(address) --> b2dd5c07
-  call := Call{From: setup_addr, To: registry, Data: "0xb2dd5c07"+Zfill(unprefix(setup_addr)) }
+func CheckRegistered(from string, hashed_serial string, registry string) (bool) {
+  // registered(bytes32) --> 5524d548
+  call := Call{From: from, To: registry, Data: "0x5524d548"+hashed_serial }
+  registered, err := client.Eth_call(call)
+  if err != nil {
+    log.Fatal("Could not check if agent was registered: ", err)
+  }
+  pass, _ := strconv.ParseUint(registered, 0, 64)
+  if pass == 0 { return false }
+  return true
+}
+
+
+/**
+ * Check if a specific address is registered to a specific serial number
+ *
+ * @param from             The origin of the message
+ * @param hashed_serial    The original setup address for the agent
+ * @param address          The address to check against the serial number
+ * @param registry         Address of the registry contract
+ * @return                 true if registerd, false if not
+ */
+func CheckRegistry(from string, hashed_serial string, address string, registry string) (bool) {
+  // check_registry(bytes32,address) --> fc91446d
+  call := Call{From: from, To: registry, Data: "0xfc91446d"+hashed_serial+Zfill(address)}
   registered, err := client.Eth_call(call)
   if err != nil {
     log.Fatal("Could not check if agent was registered: ", err)
@@ -66,13 +84,13 @@ func CheckRegistered(setup_addr string, registry string) (bool) {
 /**
  * Check if the wallet address has been claimed by a human owner.
  *
- * @param wallet_addr    The original setup address for the agent
+ * @param serial_hash    Hash of the agent's serial number
  * @param registry       Address of the registry contract
  * @return               true if registerd, false if not
  */
-func CheckClaimed(wallet_addr string, registry string) (bool) {
-  // claimed(address) --> c884ef83
-  call := Call{From: wallet_addr, To: registry, Data: "0xc884ef83"+Zfill(unprefix(wallet_addr))}
+func CheckClaimed(serial_hash string, registry string) (bool) {
+  // claimed(bytes32) --> c884ef83
+  call := Call{From: serial_hash, To: registry, Data: "0xcc3c0f06"+serial_hash}
   claimed, err := client.Eth_call(call)
   if err != nil {
     log.Fatal("Could not check if agent was claimed: ", err)
