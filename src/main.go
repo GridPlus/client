@@ -169,13 +169,15 @@ setup_pkey string, registry string, _api string) {
  */
 func check_claimed(serial_hash string, registry string) {
   log.Println("Waiting for agent to be claimed...")
+  fmt.Printf("%s Waiting for agent to be claimed...\n", DateStr())
   var reg = false
   for reg == false {
     _reg := rpc.CheckClaimed(serial_hash, registry)
     if _reg != true {
       time.Sleep(time.Second*10)
     } else {
-      log.Println("Agent registration confirmed.")
+      log.Println("Agent claimed and fully registered.")
+      fmt.Printf("%s Agent claimed and fully registered.\n", DateStr())
       reg = true
     }
   }

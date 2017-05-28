@@ -27,19 +27,17 @@ bash run.sh
 ```
 
 ### Troubleshooting
+Here are some common issues and solutions. Note that errors are, by default, logged to `src/agent.log`.
 
-Here are some common issues and solutions.
+#### "Serial number not registered with Grid+"
 
-#### When I run the client, I see panic: Agent's setup key was not registered by Grid+
-
-You need to register your agent (with its setup key) via our demo web portal.
-*NOTE: This is not yet possible. Coming soon.*
+You need to register your agent (with its setup key) via our demo web portal. *NOTE: This is not yet possible. Coming soon.*
 
 #### install.sh fails to fetch packages
 This is likely an issue with fetching go-ethereum. OSX and Ubuntu 16.04 should be fine, but we have run into issues with Ubuntu 14.04. If you have a problem on another OS, please let us know.
 
-### My client says "Waiting for registration..." forever
+#### "Waiting for agent to be claimed..." continues forever
 It is waiting for you to claim it. You may do so on our web portal. *NOTE: This is not yet possible. Coming soon.*
 
-### getsockopt: connection refused
+#### getsockopt: connection refused
 You cannot hit the RPC provider.
