@@ -70,12 +70,17 @@ func run(auth_token string, wallet string, usdx string, hub string) {
         unpaid_sum += bill.Amount
         unpaid_bill_ids = append(unpaid_bill_ids, bill.BillId)
       }
+      if unpaid_sum > 0 {
+        // ascii colors: http://misc.flogisoft.com/_media/bash/colors_format/colors_and_formatting.sh.png
+        fmt.Printf("%s Unpaid amount: \x1b[91m$%.2f\x1b[0m\n", DateStr(), unpaid_sum)
+        // 3. Get USDX balance
+        decimals := float64(rpc.TokenDecimals(wallet, usdx))
+        balance := float64(rpc.TokenBalance(wallet, usdx))
+        var usd_balance = balance/(math.Pow(10, decimals))
+        fmt.Printf("%s USDX balance: \x1b[32m$%.2f\x1b[0m\n", DateStr() , usd_balance)
+      }
 
-      // 3. Get USDX balance
-      decimals := float64(rpc.TokenDecimals(wallet, usdx))
-      balance := float64(rpc.TokenBalance(wallet, usdx))
-      var usd_balance = balance/(math.Pow(10, decimals))
-      fmt.Printf("%s USDX balance: \x1b[32m$%.2f\x1b[0m\n", DateStr() , usd_balance)
+
     }
 
     // Wait 10 seconds and execute again
@@ -115,10 +120,11 @@ func check_registered(serial_hash string, wallet string, registry string) {
  */
 func add_wallet(wallet_addr string, hashed_serial string, setup_addr string,
 setup_pkey string, registry string, _api string) {
-  log.Println("Adding wallet...")
-
   added := rpc.CheckRegistry(setup_addr, hashed_serial, wallet_addr, registry)
   if added == false {
+    log.Println("Adding wallet...")
+    fmt.Printf("%s Adding wallet...\n", DateStr())
+
     // Form a transaction to add the wallet
     var data = "0xb993b3f5"+rpc.Zfill(wallet_addr)+hashed_serial
     err, txhash, gas := rpc.AddWallet(setup_addr, registry, data, _api, setup_pkey)
@@ -135,6 +141,7 @@ setup_pkey string, registry string, _api string) {
       }
       if gasUsed < gas && gasUsed != 0 {
         mined = true
+        fmt.Printf("%s Wallet successfully added.\n", DateStr())
         log.Println("Wallet successfully added.")
       } else if gasUsed == gas {
         // Recursive call if the tx threw. Not sure what else to do here, since
