@@ -100,6 +100,42 @@ func CheckClaimed(serial_hash string, registry string) (bool) {
   return true
 }
 
+/**
+ * Get the token balance of a specific address
+ *
+ * @param addr        Address to check balance of
+ * @param token       Token contract address
+ * @return            Balance
+ */
+func TokenBalance(addr string, token string) (uint64) {
+  // claimed(bytes32) --> c884ef83
+  call := Call{From: addr, To: token, Data: "0x70a08231"+Zfill(addr)}
+  _balance, err := client.Eth_call(call)
+  if err != nil {
+    log.Fatal("Could not get balance: ", err)
+  }
+  balance, _ := strconv.ParseUint(_balance, 0, 64)
+  return balance
+}
+
+/**
+ * Get the nunmber of decimals for a token
+ *
+ * @param addr        Address sending the request
+ * @param token       Token contract address
+ * @return            Decimals
+ */
+func TokenDecimals(addr string, token string) (uint64) {
+  // claimed(bytes32) --> c884ef83
+  call := Call{From: addr, To: token, Data: "0x313ce567"}
+  _decimals, err := client.Eth_call(call)
+  if err != nil {
+    log.Fatal("Could not get token decimals: ", err)
+  }
+  decimals, _ := strconv.ParseUint(_decimals, 0, 64)
+  return decimals
+}
+
 
 /**
  * Add a wallet address to the registry. This will bump the existing setup

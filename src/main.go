@@ -2,18 +2,32 @@ package main;
 
 import (
   "api"
-  "log"
   "config"
-  "time"
+  "fmt"
+  "log"
+  "math"
+  "os"
   "rpc"
+  "time"
 )
 
 func main() {
+  // Setup logging
+  f, err := os.OpenFile("agent.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+  if err != nil {
+    fmt.Printf("\x1b[31;1mWARNING: Could not start logging process (%s)\x1b[0m\n", err)
+  }
+  defer f.Close()
+  log.SetOutput(f)
+
   conf := config.Load()
   log.Println("Starting system. Battery serial number: ", conf.SerialNo)
+  fmt.Printf("%s Starting system. Battery serial number: \x1b[4;49;33m%s\x1b[0m\n", DateStr(), conf.SerialNo)
   rpc.ConnectToRPC(conf.Provider)
   registry_addr, _ := api.GetRegistry(conf.API)
+  usdx_addr, _ := api.GetUSDX(conf.API)
   log.Println("Got registry address: ", registry_addr)
+  fmt.Printf("%s Registry contract address: \x1b[4;49;33m%s\x1b[0m\n", DateStr(), registry_addr)
 
   // If the setup keypair was not registered, something fishy is going on
   check_registered(conf.HashedSerialNo, conf.WalletAddr, registry_addr)
@@ -28,7 +42,7 @@ func main() {
   auth_token := authenticate(conf.WalletAddr, conf.WalletPkey, conf.API)
 
   // Run program
-  run(auth_token, conf.WalletAddr, conf.API)
+  run(auth_token, conf.WalletAddr, usdx_addr, conf.API)
 }
 
 
@@ -37,9 +51,10 @@ func main() {
  *
  * @param auth_token    Used to query authenticated routes
  * @param wallet        Wallet address (identifier of the device)
+ * @param usdx          Address of USDX token contract
  * @param hub           Full base url of the hub
  */
-func run(auth_token string, wallet string, hub string) {
+func run(auth_token string, wallet string, usdx string, hub string) {
   for true {
     // 1. Ping the hub and ask if there are any unpaid bills. This will return
     //    amounts and ids for the bills.
@@ -56,9 +71,11 @@ func run(auth_token string, wallet string, hub string) {
         unpaid_bill_ids = append(unpaid_bill_ids, bill.BillId)
       }
 
-      // 3. Send back the ids as well as the signed message.
-      log.Println("unpaid sum", unpaid_sum)
-      log.Println("unpaid_bill_ids", unpaid_bill_ids)
+      // 3. Get USDX balance
+      decimals := float64(rpc.TokenDecimals(wallet, usdx))
+      balance := float64(rpc.TokenBalance(wallet, usdx))
+      var usd_balance = balance/(math.Pow(10, decimals))
+      fmt.Printf("%s USDX balance: \x1b[32m$%.2f\x1b[0m\n", DateStr() , usd_balance)
     }
 
     // Wait 10 seconds and execute again
@@ -181,4 +198,8 @@ func authenticate(_agent string, _pkey string, _api string) (string) {
     }
   }
   return token
+}
+
+func DateStr() (string) {
+  return time.Now().UTC().Format(time.UnixDate)+": "
 }

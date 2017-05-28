@@ -8,3 +8,5 @@ src/src
 src/config/config.toml
 src/config/setup_keys.toml
 src/config/wallet.pem
+src/agent.log
+
