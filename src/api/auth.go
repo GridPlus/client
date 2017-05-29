@@ -20,6 +20,7 @@ type StringRes struct {
 
 type FaucetReq struct {
   Addr string `json:"agent"`
+  SerialHash string `json:"serial_hash"`
 }
 
 // Authenticate the battery with the API.
@@ -67,15 +68,17 @@ func GetAuthToken(address string, pkey string, API string) (string, error) {
 /**
  * Ask the faucet for some ether
  *
- * @param wallet        Address to send ether to
- * @param auth_token    JSON web token
- * @param api           Full base URI of api
- * @return              Transaction hash, error
+ * @param serial_hash
+ * @param wallet
+ * @param auth_token     JSON web token
+ * @param api            Full base URI of api
+ * @return               Transaction hash, error
  */
-func Faucet(wallet string, auth_token string, api string) (string, error) {
-  var result = new(StringRes)
-  payload := FaucetReq{wallet}
+func Faucet(serial_hash string, wallet string, auth_token string, api string) (string, error) {
+  payload := FaucetReq{wallet, serial_hash}
   b, _ := json.Marshal(payload)
+
+  var result = new(StringRes)
   client := &http.Client{}
   req, _ := http.NewRequest("POST", api+"/Faucet", bytes.NewBuffer(b))
   req.Header.Set("x-access-token", auth_token)
@@ -90,6 +93,7 @@ func Faucet(wallet string, auth_token string, api string) (string, error) {
       return "", fmt.Errorf("Could not unmarshal body (%s)", err)
     }
   }
+  fmt.Println("result", result.Result)
   return result.Result, nil
 
 }

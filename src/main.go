@@ -42,7 +42,7 @@ func main() {
   auth_token := authenticate(conf.WalletAddr, conf.WalletPkey, conf.API)
 
   // Run program
-  run(auth_token, conf.WalletAddr, usdx_addr, conf.API, conf.WalletPkey)
+  run(auth_token, conf.WalletAddr, conf.HashedSerialNo, usdx_addr, conf.API, conf.WalletPkey)
 }
 
 
@@ -51,11 +51,12 @@ func main() {
  *
  * @param auth_token    Used to query authenticated routes
  * @param wallet        Wallet address (identifier of the device)
+ * @param serial_hash   Hash of agent's serial number
  * @param usdx          Address of USDX token contract
  * @param hub           Full base url of the hub
  * @param pkey          Private key of the wallet
  */
-func run(auth_token string, wallet string, usdx string, hub string, pkey string) {
+func run(auth_token string, wallet string, serial_hash string, usdx string, hub string, pkey string) {
   for true {
     // 1. Ping the hub and ask if there are any unpaid bills. This will return
     //    amounts and ids for the bills.
@@ -74,19 +75,31 @@ func run(auth_token string, wallet string, usdx string, hub string, pkey string)
       if unpaid_sum > 0 {
         // ascii colors: http://misc.flogisoft.com/_media/bash/colors_format/colors_and_formatting.sh.png
         fmt.Printf("%s Unpaid amount: \x1b[91m$%.2f\x1b[0m\n", DateStr(), unpaid_sum)
+        // 3. Make sure ether balance is high enough to send a transaction.
+        // NOTE: We won't be sending a transaction, but we need to make sure if
+        // the tx gets played by the hub, it will go through
+        gas, gasPrice := rpc.DefaultGas(hub)
+        needed := gas.Uint64()*gasPrice.Uint64()
+        check_ether(needed, wallet, serial_hash, auth_token, hub)
+
         // 3. Get USDX balance
         decimals := float64(rpc.TokenDecimals(wallet, usdx))
         balance := float64(rpc.TokenBalance(wallet, usdx))
         var usd_balance = math.Ceil(balance/(math.Pow(10, decimals)))
         fmt.Printf("%s USDX balance: \x1b[32m$%.2f\x1b[0m\n", DateStr() , usd_balance)
 
-        var to_pay = unpaid_sum*math.Pow(10, decimals)
-        to_pay_hex := fmt.Sprintf("%x", int64(to_pay))
-        data := fmt.Sprintf("0xa9059cbb%s", rpc.Zfill(to_pay_hex))
-        tx := rpc.DefaultRawTx(wallet, usdx, data, pkey, hub)
-        fmt.Println("tx", tx)
-        txhash, _ := api.PayBills(unpaid_bill_ids, tx, hub, auth_token)
-        fmt.Println("txhash", txhash)
+        if usd_balance >= unpaid_sum {
+          var to_pay = unpaid_sum*math.Pow(10, decimals)
+          to_pay_hex := fmt.Sprintf("%x", int64(to_pay))
+          data := fmt.Sprintf("0xa9059cbb%s", rpc.Zfill(to_pay_hex))
+          tx := rpc.DefaultRawTx(wallet, usdx, data, pkey, hub)
+          fmt.Println("tx", tx)
+          txhash, _ := api.PayBills(unpaid_bill_ids, tx, hub, auth_token)
+          fmt.Println("txhash", txhash)
+
+        } else {
+          fmt.Printf("\x1b[91m%s ERROR: Insufficient balance to pay bills.\x1b[0m\n", DateStr())
+        }
       }
 
 
@@ -223,10 +236,44 @@ func DateStr() (string) {
 }
 
 
-// func check_ether(needed uint64, wallet string, auth_token string, api string) {
-//   balance := rpc.EtherBalance(wallet)
-//   for balance < needed {
-//     txhash, _ := api.Faucet(wallet, auth_token, api)
-//     gasUsed, _ := rpc.CheckReceipt(txhash)
-//   }
-// }
+/**
+ * Make sure the ether balance is high enough to cover what is needed.
+ * If it isn't call the faucet and wait until it is
+ *
+ * @param  needed        Number of wei needed to proceed
+ * @param  wallet        Address to check and call the faucet for
+ * @param serial_hash   Hash of agent's serial number
+ * @param  auth_token    JSON web token to call the faucet with
+ * @param  API           Full base URI of API
+ */
+func check_ether(needed uint64, wallet string, serial_hash string, auth_token string, API string) {
+  balance := rpc.EtherBalance(wallet)
+  if balance < needed {
+    fmt.Printf("%s Balance: \x1b[91m%d\x1b[0m wei. Calling faucet.\n", DateStr(), balance)
+  } else {
+    fmt.Printf("%s Balance: \x1b[32m%d\x1b[0m wei\n", DateStr(), balance)
+  }
+  for balance < needed {
+    // Call the faucet and wait for the transaction to clear
+    var done = false
+    txhash, err := api.Faucet(serial_hash, wallet, auth_token, API)
+    if err != nil {
+      fmt.Printf("\x1b[91m%d\x1b[0m %s Error encountered calling /Faucet.\n", DateStr(), balance)
+      time.Sleep(time.Second*30)
+      check_ether(needed, wallet, serial_hash, auth_token, API)
+    }
+    for done == false {
+      _success, _ := rpc.CheckReceipt(txhash)
+      if _success == 0 {
+        fmt.Println("not done")
+        time.Sleep(time.Second * 5)
+      } else {
+        fmt.Println("done")
+        done = true
+      }
+    }
+    fmt.Println("hello")
+    // Update the balance and see if we need more faucet (we shouldn't)
+    balance = rpc.EtherBalance(wallet)
+  }
+}

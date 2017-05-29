@@ -72,7 +72,6 @@ func PayBills(ids []int, tx string, api string, auth_token string) (string, erro
 	b, _ := json.Marshal(payload)
 	var result = new(PayBillsRes)
 	client := &http.Client{}
-  // req, _ := http.NewRequest("POST", api+"/PayBills", bytes.NewBuffer(jsonStr))
 	req, _ := http.NewRequest("POST", api+"/PayBills", bytes.NewBuffer(b))
   req.Header.Set("x-access-token", auth_token)
 	req.Header.Set("Content-Type", "application/json")

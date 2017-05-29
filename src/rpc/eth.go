@@ -128,7 +128,6 @@ func TokenBalance(addr string, token string) (uint64) {
 func EtherBalance(addr string) (uint64) {
   _balance, _ := client.Eth_balance(addr)
   balance, _ := strconv.ParseUint(_balance, 0, 64)
-  fmt.Println("balance", balance)
   return balance
 }
 
