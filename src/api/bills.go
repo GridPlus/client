@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 )
 
 type Bill struct {
@@ -53,6 +52,11 @@ func GetBills(api string, token string) (*[]Bill, error) {
 }
 
 
+type BillPayReq struct {
+	Tx string `json:"tx"`
+	BillIds []int `json:"bill_ids"`
+}
+
 /**
  * Get an array of Bill objects from the API. This is an authenticated request,
  * so a valid JSON web token must be included
@@ -64,15 +68,12 @@ func GetBills(api string, token string) (*[]Bill, error) {
  * @return               (array of bills, error)
  */
 func PayBills(ids []int, tx string, api string, auth_token string) (string, error) {
-	// var jsonStr = []byte(`{"tx":"`+tx+`","bill_ids":"[`+StringifyArr(ids)+`]"}`)
-	var _jsonStr = `{"tx":"`+tx+`","bill_ids":"[`+StringifyArr(ids)+`]"}`
-	fmt.Println(_jsonStr)
-
-	var jsonStr = []byte(_jsonStr)
-
+	payload := BillPayReq{tx, ids}
+	b, _ := json.Marshal(payload)
 	var result = new(PayBillsRes)
 	client := &http.Client{}
-  req, _ := http.NewRequest("POST", api+"/PayBills", bytes.NewBuffer(jsonStr))
+  // req, _ := http.NewRequest("POST", api+"/PayBills", bytes.NewBuffer(jsonStr))
+	req, _ := http.NewRequest("POST", api+"/PayBills", bytes.NewBuffer(b))
   req.Header.Set("x-access-token", auth_token)
 	req.Header.Set("Content-Type", "application/json")
 	res, _ := client.Do(req)
@@ -87,13 +88,4 @@ func PayBills(ids []int, tx string, api string, auth_token string) (string, erro
   }
   return result.Result, nil
 
-}
-
-func StringifyArr(arr []int) (string) {
-	var s = ""
-	for _ , v := range arr {
-    s += `"`+strconv.Itoa(v)+`",`
-	}
-	s = s[0:len(s)-1]
-	return s
 }

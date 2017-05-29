@@ -136,7 +136,7 @@ setup_pkey string, registry string, _api string) {
 
     // Form a transaction to add the wallet
     var data = "0xb993b3f5"+rpc.Zfill(wallet_addr)+hashed_serial
-    err, txhash, gas := rpc.AddWallet(setup_addr, registry, data, _api, setup_pkey)
+    err, txhash := rpc.AddWallet(setup_addr, registry, data, _api, setup_pkey)
     if err != nil {
       log.Panic("Unable to add wallet to registry", err)
     }
@@ -144,15 +144,15 @@ setup_pkey string, registry string, _api string) {
     // Wait until the tx is mined
     var mined = false
     for mined == false {
-      gasUsed, err2 := rpc.CheckReceipt(txhash)
+      success, err2 := rpc.CheckReceipt(txhash)
       if err2 != nil {
         log.Panic("Unable to get receipt ", err2)
       }
-      if gasUsed < gas && gasUsed != 0 {
+      if success == 1 {
         mined = true
         fmt.Printf("%s Wallet successfully added.\n", DateStr())
         log.Println("Wallet successfully added.")
-      } else if gasUsed == gas {
+      } else if success == -1 {
         // Recursive call if the tx threw. Not sure what else to do here, since
         // we can't proceed without a wallet
         mined = true
@@ -221,3 +221,12 @@ func authenticate(_agent string, _pkey string, _api string) (string) {
 func DateStr() (string) {
   return time.Now().UTC().Format(time.UnixDate)+": "
 }
+
+
+// func check_ether(needed uint64, wallet string, auth_token string, api string) {
+//   balance := rpc.EtherBalance(wallet)
+//   for balance < needed {
+//     txhash, _ := api.Faucet(wallet, auth_token, api)
+//     gasUsed, _ := rpc.CheckReceipt(txhash)
+//   }
+// }

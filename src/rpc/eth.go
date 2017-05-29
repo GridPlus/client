@@ -118,6 +118,20 @@ func TokenBalance(addr string, token string) (uint64) {
   return balance
 }
 
+
+/**
+ * Get the ether balance (in wei) of the address in question
+ *
+ * @param addr        Address to query
+ * @return            Wei balance
+ */
+func EtherBalance(addr string) (uint64) {
+  _balance, _ := client.Eth_balance(addr)
+  balance, _ := strconv.ParseUint(_balance, 0, 64)
+  fmt.Println("balance", balance)
+  return balance
+}
+
 /**
  * Get the nunmber of decimals for a token
  *
@@ -149,18 +163,16 @@ func TokenDecimals(addr string, token string) (uint64) {
  * @param pkey    Private key of the currently registered setup keypair
  * @return        error, txhash
  */
-func AddWallet(from string, to string, data string, API string, pkey string) (error, string, int64) {
-  // Get some params
-  gas, _ := DefaultGas(API)
+func AddWallet(from string, to string, data string, API string, pkey string) (error, string) {
   // Form the raw tx
   txn := DefaultRawTx(from, to, data, pkey, API)
   // Submit the raw transaction to our RPC client
   txhash, err4 := client.Eth_sendRawTransaction(txn)
   if err4 != nil {
-    return fmt.Errorf("Error submitting tx: (%s)", err4), "", 0
+    return fmt.Errorf("Error submitting tx: (%s)", err4), ""
   }
   // Return the txhash
-  return nil, txhash, gas.Int64()
+  return nil, txhash
 }
 
 
@@ -192,17 +204,22 @@ func DefaultRawTx(from string, to string, data string, pkey string, API string) 
  * if the tx threw.
  *
  * @param txhash    Amount of gas used, an integer
- * @return          (cumulativeGasUsed: 0x-prefixed hex string, error)
+ * @return          1 if the transaction went through, -1 if it threw. 0 otherwise
  */
-func CheckReceipt(txhash string) (int64, error) {
+func CheckReceipt(txhash string) (int8, error) {
   _gasUsed, err := client.Eth_gasUsed(txhash)
   if err != nil {
     return 0, fmt.Errorf("Error getting tx receipt: (%s)", err)
   } else if _gasUsed == "" {
     return 0, nil
   }
-  gasUsed, _ := strconv.ParseInt(_gasUsed, 0, 64)
-  return gasUsed, nil
+  _tx, _ := client.Eth_getTransactionByHash(txhash)
+  gasSent := uint64(_tx.Gas)
+  gasUsed, _ := strconv.ParseUint(_gasUsed, 0, 64)
+  if gasUsed >= gasSent {
+    return -1, nil
+  }
+  return 1, nil
 }
 
 

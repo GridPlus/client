@@ -672,9 +672,27 @@ func (client *EthereumClient) Eth_gasUsed(txhash string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// if clientResp.Result.CumulativeGasUsed == "" {
-	// 	return "", nil
-	// }
 
 	return clientResp.Result.CumulativeGasUsed, nil
+}
+
+func (client *EthereumClient) Eth_balance(addr string) (string, error) {
+	reqBody := JSONRPCRequest{
+		JSONRPC: "2.0",
+		ID:      1,
+		Method:  "eth_getBalance",
+		Params:  []interface{}{addr, "latest"},
+	}
+	res2, err := client.issueRequest(&reqBody)
+	if err != nil {
+		return "", err
+	}
+
+	var clientResp TxResponse
+	err = json.Unmarshal(res2, &clientResp)
+	if err != nil {
+		return "", err
+	}
+
+	return clientResp.Result, nil
 }

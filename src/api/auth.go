@@ -18,6 +18,10 @@ type StringRes struct {
   Result string
 }
 
+type FaucetReq struct {
+  Addr string `json:"agent"`
+}
+
 // Authenticate the battery with the API.
 // @returns - JSON web token string that must be included in authenticated endpoints.
 //            This token will only be valid for a finite period of time. And once it
@@ -56,4 +60,36 @@ func GetAuthToken(address string, pkey string, API string) (string, error) {
 
   // Return the JSON web token
   return string(authdata.Result), nil
+}
+
+
+
+/**
+ * Ask the faucet for some ether
+ *
+ * @param wallet        Address to send ether to
+ * @param auth_token    JSON web token
+ * @param api           Full base URI of api
+ * @return              Transaction hash, error
+ */
+func Faucet(wallet string, auth_token string, api string) (string, error) {
+  var result = new(StringRes)
+  payload := FaucetReq{wallet}
+  b, _ := json.Marshal(payload)
+  client := &http.Client{}
+  req, _ := http.NewRequest("POST", api+"/Faucet", bytes.NewBuffer(b))
+  req.Header.Set("x-access-token", auth_token)
+  req.Header.Set("Content-Type", "application/json")
+  res, _ := client.Do(req)
+  body, err := ioutil.ReadAll(res.Body)
+  if err != nil {
+    return "", fmt.Errorf("Could not read response body (%s)", err)
+  } else {
+    err2 := json.Unmarshal(body, &result)
+    if err2 != nil {
+      return "", fmt.Errorf("Could not unmarshal body (%s)", err)
+    }
+  }
+  return result.Result, nil
+
 }
