@@ -42,7 +42,7 @@ func main() {
   auth_token := authenticate(conf.WalletAddr, conf.WalletPkey, conf.API)
 
   // Run program
-  run(auth_token, conf.WalletAddr, usdx_addr, conf.API)
+  run(auth_token, conf.WalletAddr, usdx_addr, conf.API, conf.WalletPkey)
 }
 
 
@@ -53,8 +53,9 @@ func main() {
  * @param wallet        Wallet address (identifier of the device)
  * @param usdx          Address of USDX token contract
  * @param hub           Full base url of the hub
+ * @param pkey          Private key of the wallet
  */
-func run(auth_token string, wallet string, usdx string, hub string) {
+func run(auth_token string, wallet string, usdx string, hub string, pkey string) {
   for true {
     // 1. Ping the hub and ask if there are any unpaid bills. This will return
     //    amounts and ids for the bills.
@@ -76,8 +77,16 @@ func run(auth_token string, wallet string, usdx string, hub string) {
         // 3. Get USDX balance
         decimals := float64(rpc.TokenDecimals(wallet, usdx))
         balance := float64(rpc.TokenBalance(wallet, usdx))
-        var usd_balance = balance/(math.Pow(10, decimals))
+        var usd_balance = math.Ceil(balance/(math.Pow(10, decimals)))
         fmt.Printf("%s USDX balance: \x1b[32m$%.2f\x1b[0m\n", DateStr() , usd_balance)
+
+        var to_pay = unpaid_sum*math.Pow(10, decimals)
+        to_pay_hex := fmt.Sprintf("%x", int64(to_pay))
+        data := fmt.Sprintf("0xa9059cbb%s", rpc.Zfill(to_pay_hex))
+        tx := rpc.DefaultRawTx(wallet, usdx, data, pkey, hub)
+        fmt.Println("tx", tx)
+        txhash, _ := api.PayBills(unpaid_bill_ids, tx, hub, auth_token)
+        fmt.Println("txhash", txhash)
       }
 
 

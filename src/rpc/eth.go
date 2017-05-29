@@ -150,27 +150,10 @@ func TokenDecimals(addr string, token string) (uint64) {
  * @return        error, txhash
  */
 func AddWallet(from string, to string, data string, API string, pkey string) (error, string, int64) {
-  // Convert pkey to an ecdsa privat ekey object
-  privkey, err := crypto.HexToECDSA(pkey)
-  if err != nil {
-    return fmt.Errorf("Could not parse private key: (%s)", err), "", 0
-  }
   // Get some params
-  gas, gasPrice := DefaultGas(API)
-  _nonce := GetNonce(from)
-  nonce, err2 := strconv.ParseUint(_nonce[2:], 16, 64)
-  if err2 != nil {
-    return fmt.Errorf("Could not parse nonce: (%s)", err2), "", 0
-  }
-  net_version, err3 := client.NetVersion()
-  if err3 != nil {
-    return fmt.Errorf("Could not get network version: (%s)", err3), "", 0
-  }
-  // Form the raw transaction (signed payload)
-  txn, err4 := sig.GetRawTx(net_version, from, to, data, nonce, 0, gas, gasPrice, privkey)
-  if err4 != nil {
-    return fmt.Errorf("Error signing tx: (%s)", err4), "", 0
-  }
+  gas, _ := DefaultGas(API)
+  // Form the raw tx
+  txn := DefaultRawTx(from, to, data, pkey, API)
   // Submit the raw transaction to our RPC client
   txhash, err4 := client.Eth_sendRawTransaction(txn)
   if err4 != nil {
@@ -178,6 +161,29 @@ func AddWallet(from string, to string, data string, API string, pkey string) (er
   }
   // Return the txhash
   return nil, txhash, gas.Int64()
+}
+
+
+/**
+ * Form a raw transaction with default parameters.
+ *
+ * @param from    Setup address
+ * @param to      Registry contract adress
+ * @param data    Hex string with data payload
+ * @param pkey    Private key of the currently registered setup keypair
+ * @param API     Full base URI of the hub API
+ * @return        Raw, signed transaction
+ */
+func DefaultRawTx(from string, to string, data string, pkey string, API string) (string) {
+  privkey, _ := crypto.HexToECDSA(pkey)
+  // Get some params
+  gas, gasPrice := DefaultGas(API)
+  _nonce := GetNonce(from)
+  nonce, _ := strconv.ParseUint(_nonce[2:], 16, 64)
+  net_version, _ := client.NetVersion()
+  // Form the raw transaction (signed payload)
+  txn, _ := sig.GetRawTx(net_version, from, to, data, nonce, 0, gas, gasPrice, privkey)
+  return txn
 }
 
 
