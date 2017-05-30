@@ -19,9 +19,13 @@ type GetBillRes struct {
 }
 
 type PayBillsRes struct {
-	Result string `json:"result"`
+	Result []int `json:"result"`
 }
 
+type BillPayReq struct {
+	Tx string `json:"tx"`
+	BillIds []int `json:"bill_ids"`
+}
 
 /**
  * Get an array of Bill objects from the API. This is an authenticated request,
@@ -51,12 +55,6 @@ func GetBills(api string, token string) (*[]Bill, error) {
 
 }
 
-
-type BillPayReq struct {
-	Tx string `json:"tx"`
-	BillIds []int `json:"bill_ids"`
-}
-
 /**
  * Get an array of Bill objects from the API. This is an authenticated request,
  * so a valid JSON web token must be included
@@ -65,9 +63,9 @@ type BillPayReq struct {
  * @param  tx            Raw transaction string signed by agent
  * @param  api           Base URI for the hub API
  * @param  auth_token    JSON web token for the agent
- * @return               (array of bills, error)
+ * @return               (array of bill ids, error)
  */
-func PayBills(ids []int, tx string, api string, auth_token string) (string, error) {
+func PayBills(ids []int, tx string, api string, auth_token string) ([]int, error) {
 	payload := BillPayReq{tx, ids}
 	b, _ := json.Marshal(payload)
 	var result = new(PayBillsRes)
@@ -78,11 +76,11 @@ func PayBills(ids []int, tx string, api string, auth_token string) (string, erro
 	res, _ := client.Do(req)
   body, err := ioutil.ReadAll(res.Body)
   if err != nil {
-    return "", fmt.Errorf("Could not read response body (%s)", err)
+    return nil, fmt.Errorf("Could not read response body (%s)", err)
   } else {
     err2 := json.Unmarshal(body, &result)
     if err2 != nil {
-      return "", fmt.Errorf("Could not unmarshal body (%s)", err)
+      return nil, fmt.Errorf("Could not unmarshal body (%s)", err)
     }
   }
   return result.Result, nil

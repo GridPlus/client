@@ -57,6 +57,9 @@ func main() {
  * @param pkey          Private key of the wallet
  */
 func run(auth_token string, wallet string, serial_hash string, usdx string, hub string, pkey string) {
+  // Get hub address
+  hub_addr, _ := api.GetHubAddr(hub)
+
   for true {
     // 1. Ping the hub and ask if there are any unpaid bills. This will return
     //    amounts and ids for the bills.
@@ -91,12 +94,15 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
         if usd_balance >= unpaid_sum {
           var to_pay = unpaid_sum*math.Pow(10, decimals)
           to_pay_hex := fmt.Sprintf("%x", int64(to_pay))
-          data := fmt.Sprintf("0xa9059cbb%s", rpc.Zfill(to_pay_hex))
+          data := fmt.Sprintf("0xa9059cbb%s%s", rpc.Zfill(hub_addr), rpc.Zfill(to_pay_hex))
           tx := rpc.DefaultRawTx(wallet, usdx, data, pkey, hub)
-          fmt.Println("tx", tx)
-          txhash, _ := api.PayBills(unpaid_bill_ids, tx, hub, auth_token)
-          fmt.Println("txhash", txhash)
+          ids, err := api.PayBills(unpaid_bill_ids, tx, hub, auth_token)
 
+          if err != nil {
+            fmt.Printf("\x1b[91m%s ERROR: Failed to pay bills.\x1b[0m\n", DateStr())
+          } else {
+            fmt.Printf("\x1b[32m%s Successfully paid %d bills ($%.2f)\x1b[0m\n", DateStr(), len(ids), usd_balance)
+          }
         } else {
           fmt.Printf("\x1b[91m%s ERROR: Insufficient balance to pay bills.\x1b[0m\n", DateStr())
         }
