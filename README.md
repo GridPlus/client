@@ -7,21 +7,24 @@ owned by the device.
 
 ## Setup
 
-Once you have the client installed (instructions below), please go to app.gridplus.io and click the button on the menu titled "Get Serial Number":
+Once you have the client installed (instructions below), please go to ~~app.gridplus.io~~(not available yet) and click the button on the menu titled "Get setup key".
 
-<image of button on web app>
+![setup key button](images/getAgentButton.png)
 
-Once you have that, navigate to your install directory and type:
+This will pop up a window with your setup address, private key, and serial number. **In the production app, these would be pre-loaded onto your device and the serial number would be printed on the box.**
+
+![config.toml information](images/tomlfile.png)
+
+Copy all that information and save it into the following file: `src/config/setup_keys.toml`. An example `setup_keys.toml` file looks like this:
 
 ```
-bash install.sh <serial number>
+[agent]
+addr = "0x2a919a8ff288615fb1381ff1a582b826d412dab2"
+pkey = "1aec3339a5388d3c165f7d0dd35e5c16acad31eb311f1526b920d410636a6028"
+serial_no = "726a686c68f""
 ```
 
-Where `<serial number>` is your pasted serial number exactly as it is shown on the web app.
-*Note that in the future, your device will come pre-loaded with a serial number. Every serial number must be whitelisted by Grid+ before it can be used.*
-
-Once the install script is done, run:
-
+Now you can run the client:
 ```
 bash run.sh
 ```

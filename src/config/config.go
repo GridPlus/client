@@ -7,6 +7,7 @@ import (
   "log"
   "sig"
 )
+import "fmt"
 
 type Config struct {
   API string                    // Host of the Grid+ API
@@ -43,10 +44,9 @@ func Load() (Config) {
     if err2 != nil {
       log.Fatal("Could not find crypto keypair at 'config/setup_keys.toml'")
     } else {
-      _config.SetupPkey = viper.GetString("setup.pkey")
-      _config.SetupAddr = viper.GetString("setup.addr")
-
-      _config.SerialNo = viper.GetString("setup.serial")
+      _config.SetupPkey = viper.GetString("agent.pkey")
+      _config.SetupAddr = viper.GetString("agent.addr")
+      _config.SerialNo = viper.GetString("agent.serial_no")
       hash := sig.Keccak256Hash([]byte(_config.SerialNo))
       hash_str := hex.EncodeToString(hash)
       _config.HashedSerialNo = hash_str
