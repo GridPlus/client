@@ -5,6 +5,40 @@ by a human owner, the client will receive data periodically from our hub.
 Based on this data, the client may choose to reply to the hub with signed messages that move tokens
 owned by the device.
 
+## Setup
+
+Once you have the client installed (instructions below), please go to app.gridplus.io and click the button on the menu titled "Get Serial Number":
+
+<image of button on web app>
+
+Once you have that, navigate to your install directory and type:
+
+```
+bash install.sh <serial number>
+```
+
+Where `<serial number>` is your pasted serial number exactly as it is shown on the web app.
+*Note that in the future, your device will come pre-loaded with a serial number. Every serial number must be whitelisted by Grid+ before it can be used.*
+
+Once the install script is done, run:
+
+```
+bash run.sh
+```
+
+You will see something like this:
+<image of console>
+
+Now go back to the web app and register your serial number on Ethereum. This associates your metamask address with the device's address on the blockchain.
+
+<image of first setup tab>
+
+Once that's complete, you can proceed to getting started with Grid+. Navigate to the second tab and enter the serial number again, this time with a nickname for your device (you can call it anything).
+
+<image of second setup tab>
+
+You should now see a chart of your usage data. For the demo, this is randomly generated data, but in the production app you would see how much energy you are consuming and how much it is costing you.
+
 ## Prerequisites
 
 You will need a UNIX shell (i.e. OSX or Linux). You will also need to have Go installed. If you are on OSX, you can do this with homebrew (`brew install golang`).
@@ -25,6 +59,7 @@ You can now run the client with:
 ```
 bash run.sh
 ```
+
 
 ### Troubleshooting
 Here are some common issues and solutions. Note that errors are, by default, logged to `src/agent.log`.

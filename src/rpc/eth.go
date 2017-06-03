@@ -70,7 +70,8 @@ func CheckRegistered(from string, hashed_serial string, registry string) (bool) 
  */
 func CheckRegistry(from string, hashed_serial string, address string, registry string) (bool) {
   // check_registry(bytes32,address) --> fc91446d
-  call := Call{From: from, To: registry, Data: "0xfc91446d"+hashed_serial+Zfill(address)}
+  var data = "0xfc91446d"+hashed_serial+Zfill(address)
+  call := Call{From: from, To: registry, Data: data}
   registered, err := client.Eth_call(call)
   if err != nil {
     log.Fatal("Could not check if agent was registered: ", err)

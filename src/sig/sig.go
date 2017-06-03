@@ -14,7 +14,6 @@ import "fmt"
 import "github.com/ethereum/go-ethereum/core/types"
 import "github.com/ethereum/go-ethereum/common"
 import "github.com/ethereum/go-ethereum/crypto"
-
 // import "math/rand"
 // import "log"
 

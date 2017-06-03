@@ -21,8 +21,8 @@ func main() {
   log.SetOutput(f)
 
   conf := config.Load()
-  log.Println("Starting system. Battery serial number: ", conf.SerialNo)
-  fmt.Printf("%s Starting system. Battery serial number: \x1b[4;49;33m%s\x1b[0m\n", DateStr(), conf.SerialNo)
+  log.Println("Starting system. Agent serial number: ", conf.SerialNo)
+  fmt.Printf("%s Starting system. Agent serial number: \x1b[4;49;33m%s\x1b[0m\n", DateStr(), conf.SerialNo)
   rpc.ConnectToRPC(conf.Provider)
   registry_addr, _ := api.GetRegistry(conf.API)
   usdx_addr, _ := api.GetUSDX(conf.API)
@@ -34,7 +34,6 @@ func main() {
 
   // Add the wallet address to the registrar
   add_wallet(conf.WalletAddr, conf.HashedSerialNo, conf.SetupAddr, conf.SetupPkey, registry_addr, conf.API)
-
   // System cannot proceed until agent is registered
   check_claimed(conf.HashedSerialNo, registry_addr)
 

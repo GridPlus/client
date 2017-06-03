@@ -51,12 +51,16 @@ func writeConfigFile() {
   var rpc = "http://localhost:8545" // Placeholder
   dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 
+  if len(os.Args) < 2 {
+    log.Panic("You must provide a serial number.")
+  }
+
   var s = fmt.Sprintf(`[development]
 gridplus_api = "%s"
 rpc_provider = "%s"
-serial_no = "ABCD0101"
+serial_no = "%s"
 [wallet]
-key_path = "%s/../src/config"`, api, rpc, dir)
+key_path = "%s/../src/config"`, api, rpc, os.Args[1], dir)
 
   _, err2 := f.WriteString(s)
   if err2 != nil {

@@ -13,7 +13,6 @@ import (
 )
 import "github.com/ethereum/go-ethereum/crypto"
 
-
 type StringRes struct {
   Result string
 }
@@ -38,6 +37,7 @@ func GetAuthToken(address string, pkey string, API string) (string, error) {
   if err != nil { return "", fmt.Errorf("Could not parse authentication data: (%s)", err1) }
   err2 := json.Unmarshal(body, &data)
   if err2 != nil { return "", fmt.Errorf("Could not unmarshal authentication data: (%s)", err2) }
+
   // Hash the data. Keep the byte array
   data_hash := sig.Keccak256Hash([]byte(data.Result))
   // Sign the data with the private key
@@ -50,7 +50,7 @@ func GetAuthToken(address string, pkey string, API string) (string, error) {
   // 2: Send sigature, get token
   // ---------------------
   var authdata = new(StringRes)
-  var jsonStr = []byte(`{"owner":"`+address+`","sig":"`+_sig+`"}`)
+  var jsonStr = []byte(`{"owner":"`+address+`","sig":"0x`+_sig+`"}`)
   res, err5 := http.Post(API+"/Authenticate", "application/json", bytes.NewBuffer(jsonStr))
   if err5 != nil { return "", fmt.Errorf("Could not hit POST /Authenticate: (%s)", err5) }
   if res.StatusCode != 200 { return "", fmt.Errorf("(%s): Error in POST /Authenticate", res.StatusCode)}
