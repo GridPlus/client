@@ -166,6 +166,7 @@ func TokenDecimals(addr string, token string) (uint64) {
 func AddWallet(from string, to string, data string, API string, pkey string) (error, string) {
   // Form the raw tx
   txn := DefaultRawTx(from, to, data, pkey, API)
+  fmt.Println("got txn", txn)
   // Submit the raw transaction to our RPC client
   txhash, err4 := client.Eth_sendRawTransaction(txn)
   if err4 != nil {

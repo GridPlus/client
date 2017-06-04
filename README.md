@@ -24,23 +24,33 @@ pkey = "1aec3339a5388d3c165f7d0dd35e5c16acad31eb311f1526b920d410636a6028"
 serial_no = "726a686c68f""
 ```
 
-Now you can run the client:
+Now you can run the agent:
 ```
 bash run.sh
 ```
 
-You will see something like this:
-<image of console>
+This will generate a wallet key and register that with the smart contract. All subsequent blockchain interactions coming from the agent will use the wallet key instead of the setup key.
+
+You should see something like this:
+![CLI setup](images/cli_setup.png)
 
 Now go back to the web app and register your serial number on Ethereum. This associates your metamask address with the device's address on the blockchain.
 
-<image of first setup tab>
+![Register on Ethereum](images/register_eth.png)
 
-Once that's complete, you can proceed to getting started with Grid+. Navigate to the second tab and enter the serial number again, this time with a nickname for your device (you can call it anything).
+You should see this on your console now:
 
-<image of second setup tab>
+![Claimed](images/claimed.png)
 
-You should now see a chart of your usage data. For the demo, this is randomly generated data, but in the production app you would see how much energy you are consuming and how much it is costing you.
+Once that's complete, you can proceed to getting started with Grid+. Click "next" enter the serial number again, this time with a nickname for your device (you can call it anything).
+
+![Register on Ethereum](images/register_grid.png)
+
+You should now see a chart of your usage data. If you don't see anything, just wait a minute or two and refresh.
+
+![Usage data](images/data.png)
+
+**Note: For the demo, this is randomly generated data, but in the production app you would see how much energy you are consuming and how much it is costing you.**
 
 ## Prerequisites
 
