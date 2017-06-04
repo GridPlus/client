@@ -1,4 +1,5 @@
-# Grid+ Client
+![Logo](images/logo.png)
+# Agent Client
 This repo contains the Grid+ client, which is a binary meant to live on
 the smart agent device (any small system-on-a-chip). Once the agent is registered and claimed
 by a human owner, the client will receive data periodically from our hub.
@@ -6,6 +7,9 @@ Based on this data, the client may choose to reply to the hub with signed messag
 owned by the device.
 
 ## Setup
+
+*The following a guide to setting up your virtual device for our alpha period. This is a significantly different setup process than in our production system. Here you will need to install the client on your computer and generate a set of setup keys. In production, both the client and the keys would come pre-loaded onto your agent.*
+
 
 Once you have the client installed (instructions below), please go to ~~app.gridplus.io~~(not available yet) and click the button on the menu titled "Get setup key".
 
