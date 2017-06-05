@@ -1,3 +1,4 @@
+// Write a config file with a wallet key path as well as URIs of services.
 package main;
 
 import (
@@ -10,29 +11,7 @@ import (
 
 
 func main() {
-  writeKeyFile()
   writeConfigFile()
-}
-
-/**
- * Create a setup key and write it to a config file in plaintext. This will
- * only be used once. For demo only.
- */
-func writeKeyFile() {
-  // Write key and address to a toml file
-  addr, pkey := keygen()
-  f, err := os.Create("../src/config/setup_keys.toml")
-  if err != nil {
-    log.Panic("Could not create or open setup_keys.toml")
-  }
-  defer f.Close()
-
-  var s = fmt.Sprintf("[agent]\naddr = \"%s\"\npkey = \"%s\"", addr, pkey)
-  _, err2 := f.WriteString(s)
-  if err2 != nil {
-    log.Panic("Could not write your address or pkey")
-  }
-  return
 }
 
 
@@ -51,16 +30,12 @@ func writeConfigFile() {
   var rpc = "http://localhost:8545" // Placeholder
   dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 
-  if len(os.Args) < 2 {
-    log.Panic("You must provide a serial number.")
-  }
 
   var s = fmt.Sprintf(`[development]
 gridplus_api = "%s"
 rpc_provider = "%s"
-serial_no = "%s"
 [wallet]
-key_path = "%s/../src/config"`, api, rpc, os.Args[1], dir)
+key_path = "%s/../src/config"`, api, rpc, dir)
 
   _, err2 := f.WriteString(s)
   if err2 != nil {

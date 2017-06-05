@@ -160,10 +160,7 @@ setup_pkey string, registry string, _api string) {
 
     // Form a transaction to add the wallet
     var data = "0xb993b3f5"+rpc.Zfill(wallet_addr)+hashed_serial
-    fmt.Println("data", data)
     err, txhash := rpc.AddWallet(setup_addr, registry, data, _api, setup_pkey)
-    fmt.Println("txhash", txhash)
-    fmt.Println("err", err)
     if err != nil {
       log.Panic("Unable to add wallet to registry", err)
     }

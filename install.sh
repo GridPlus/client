@@ -4,6 +4,12 @@ export GOPATH="$(pwd -P)"
 export GOBIN=$GOPATH/bin
 
 echo "Fetching packages..."
-cd src && go get && go build -ldflags -s && cd ..
+cd src && go get && cd ..
 
-echo "Client installed. Start it by running 'bash run.sh'"
+cd init && go build -ldflags -s && ./init && cd ..
+
+echo "Services configured."
+
+cd src && go build -ldflags -s && cd ..
+
+echo "Client installed. Fill out your setup_keys.toml file and run with 'run.sh'"

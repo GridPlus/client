@@ -8,10 +8,10 @@ owned by the device.
 
 ## Setup
 
-*The following a guide to setting up your virtual device for our alpha period. This is a significantly different setup process than in our production system. Here you will need to install the client on your computer and generate a set of setup keys. In production, both the client and the keys would come pre-loaded onto your agent.*
+*The following is a guide to setting up your virtual device for our alpha period. This is a significantly different setup process than in our production system. Here you will need to install the client on your computer and generate a set of setup keys. In production, both the client and the keys would come pre-loaded onto your agent.*
 
 
-Once you have the client installed (instructions below), please go to ~~app.gridplus.io~~(not available yet) and click the button on the menu titled "Get setup key".
+Once you have the client installed (instructions below), please go to ~~app.gridplus.io~~(not available yet) and sign in with metamask. This will ask you to sign a message with your private key (*not* an Ethereum transaction). Once you're logged in, click the button on the menu titled "Get setup key".
 
 ![setup key button](images/getAgentButton.png)
 
@@ -36,13 +36,13 @@ bash run.sh
 This will generate a wallet key and register that with the smart contract. All subsequent blockchain interactions coming from the agent will use the wallet key instead of the setup key.
 
 You should see something like this:
-![CLI setup](images/cli_setup.png)
+![CLI setup](images/bashscripts.png)
 
 Now go back to the web app and register your serial number on Ethereum. This associates your metamask address with the device's address on the blockchain.
 
 ![Register on Ethereum](images/register_eth.png)
 
-You should see this on your console now:
+You should see the green line in your console within a few seconds. Your device may also call the faucet for some ether. This is also normal.
 
 ![Claimed](images/claimed.png)
 

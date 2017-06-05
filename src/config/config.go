@@ -46,6 +46,9 @@ func Load() (Config) {
       _config.SetupPkey = viper.GetString("agent.pkey")
       _config.SetupAddr = viper.GetString("agent.addr")
       _config.SerialNo = viper.GetString("agent.serial_no")
+      if _config.SerialNo == "" {
+        log.Panic("No serial number detected.")
+      }
       hash := sig.Keccak256Hash([]byte(_config.SerialNo))
       hash_str := hex.EncodeToString(hash)
       _config.HashedSerialNo = hash_str

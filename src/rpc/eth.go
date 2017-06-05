@@ -166,7 +166,6 @@ func TokenDecimals(addr string, token string) (uint64) {
 func AddWallet(from string, to string, data string, API string, pkey string) (error, string) {
   // Form the raw tx
   txn := DefaultRawTx(from, to, data, pkey, API)
-  fmt.Println("got txn", txn)
   // Submit the raw transaction to our RPC client
   txhash, err4 := client.Eth_sendRawTransaction(txn)
   if err4 != nil {
@@ -215,7 +214,7 @@ func CheckReceipt(txhash string) (int8, error) {
     return 0, nil
   }
   _tx, _ := client.Eth_getTransactionByHash(txhash)
-  gasSent := uint64(_tx.Gas)
+  gasSent, _ := strconv.ParseUint(_tx.Gas, 0, 64)
   gasUsed, _ := strconv.ParseUint(_gasUsed, 0, 64)
   if gasUsed >= gasSent {
     return -1, nil

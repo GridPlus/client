@@ -446,7 +446,8 @@ func (client *EthereumClient) Eth_getBlockByHash(blockHash string, full bool) (*
 }
 
 // Eth_getTransactionByHash calls the eth_getTransactionByHash JSON-RPC method
-func (client *EthereumClient) Eth_getTransactionByHash(txHash string) (*Transaction, error) {
+func (client *EthereumClient) Eth_getTransactionByHash(txHash string) (TransactionResult, error) {
+	var emptyResp = TransactionResult{}
 
 	reqBody := JSONRPCRequest{
 		JSONRPC: "2.0",
@@ -457,21 +458,16 @@ func (client *EthereumClient) Eth_getTransactionByHash(txHash string) (*Transact
 
 	body, err := client.issueRequest(&reqBody)
 	if err != nil {
-		return nil, err
+		return emptyResp, err
 	}
 
 	var clientResp TransactionResponse
 	err = json.Unmarshal(body, &clientResp)
 	if err != nil {
-		return nil, err
+		return emptyResp, err
 	}
 
-	tx, err := clientResp.Result.ToTransaction()
-	if err != nil {
-		return nil, err
-	}
-
-	return tx, nil
+	return clientResp.Result, nil
 }
 
 // Eth_getBlockByNumber calls the eth_getBlockByNumber JSON-RPC method

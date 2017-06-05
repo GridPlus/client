@@ -93,7 +93,6 @@ func Faucet(serial_hash string, wallet string, auth_token string, api string) (s
       return "", fmt.Errorf("Could not unmarshal body (%s)", err)
     }
   }
-  fmt.Println("result", result.Result)
   return result.Result, nil
 
 }
