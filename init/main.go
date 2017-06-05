@@ -26,8 +26,12 @@ func writeConfigFile() {
   }
   defer f.Close()
 
-  var api = "http://localhost:3000" // Placeholder
-  var rpc = "http://localhost:8545" // Placeholder
+  var api = "https://app.gridplus.io:3001"
+  var rpc = "http://app.gridplus.io:8545"
+  if len(os.Args) > 1 && os.Args[1] == "dev" {
+    api = "http://localhost:3000"
+    rpc = "http://localhost:8545"
+  }
   dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 
 

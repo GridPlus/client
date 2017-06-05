@@ -6,7 +6,7 @@ export GOBIN=$GOPATH/bin
 echo "Fetching packages..."
 cd src && go get && cd ..
 
-cd init && go build -ldflags -s && ./init && cd ..
+cd init && go build -ldflags -s && ./init $1 && cd ..
 
 echo "Services configured."
 
