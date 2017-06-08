@@ -89,13 +89,13 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
       }
       if unpaid_sum > 0 {
         // ascii colors: http://misc.flogisoft.com/_media/bash/colors_format/colors_and_formatting.sh.png
-        fmt.Printf("%s Unpaid amount: \x1b[91m$%.2f\x1b[0m\n", DateStr(), unpaid_sum)
+        fmt.Printf("%s Unpaid amount: \x1b[91m$%.6f\x1b[0m\n", DateStr(), unpaid_sum)
 
         // 3. Get USDX balance
         decimals := float64(rpc.TokenDecimals(wallet, usdx))
         balance := float64(rpc.TokenBalance(wallet, usdx))
         var usd_balance = math.Ceil(balance/(math.Pow(10, decimals)))
-        fmt.Printf("%s USDX balance: \x1b[32m$%.2f\x1b[0m\n", DateStr() , usd_balance)
+        fmt.Printf("%s USDX balance: \x1b[32m$%.6f\x1b[0m\n", DateStr() , usd_balance)
 
         if usd_balance >= unpaid_sum {
           // Round to the nearest USDX atomic unit
@@ -105,7 +105,6 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
           data := fmt.Sprintf("0xa9059cbb%s%s", rpc.Zfill(hub_addr), rpc.Zfill(to_pay_hex))
           tx := rpc.DefaultRawTx(wallet, usdx, data, pkey, hub)
           ids, err := api.PayBills(unpaid_bill_ids, tx, hub, auth_token)
-
           if err != nil {
             fmt.Printf("\x1b[91m%s ERROR: Failed to pay bills.\x1b[0m\n", DateStr())
           } else {
