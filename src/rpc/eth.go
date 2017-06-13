@@ -167,12 +167,7 @@ func AddWallet(from string, to string, data string, API string, pkey string) (er
   // Form the raw tx
   txn := DefaultRawTx(from, to, data, pkey, API)
   // Submit the raw transaction to our RPC client
-  txhash, err4 := client.Eth_sendRawTransaction(txn)
-  if err4 != nil {
-    return fmt.Errorf("Error submitting tx: (%s)", err4), ""
-  }
-  // Return the txhash
-  return nil, txhash
+  return SendRaw(txn)
 }
 
 
@@ -198,6 +193,59 @@ func DefaultRawTx(from string, to string, data string, pkey string, API string) 
   return txn
 }
 
+
+
+/**
+ * Form a raw transaction with custom parameters.
+ *
+ * @param from        Setup address
+ * @param to          Registry contract adress
+ * @param data        Hex string with data payload
+ * @param pkey        Private key of the currently registered setup keypair
+ * @param gas         Total gas to consume
+ * @param gasPrice    Price in wei per unit gas (hex, 0x-prefixed string)
+ * @param value       Amount to send with msg.value
+ * @return        Raw, signed transaction
+ */
+func RawTx(from string, to string, data string, pkey string, _gas uint64, _gasPrice uint64, value int64) (string) {
+  privkey, _ := crypto.HexToECDSA(pkey)
+  // Get some params
+  _nonce := GetNonce(from)
+  nonce, _ := strconv.ParseUint(_nonce[2:], 16, 64)
+  net_version, _ := client.NetVersion()
+
+  gas := big.NewInt(int64(_gas))
+  gasPrice := big.NewInt(int64(_gasPrice))
+
+  // Form the raw transaction (signed payload)
+  txn, _ := sig.GetRawTx(net_version, from, to, data, nonce, value, gas, gasPrice, privkey)
+  return txn
+}
+
+
+/**
+ * Send a raw transaction to the RPC host. may be called externally
+ */
+func SendRaw(tx string) (error, string) {
+  txhash, err := client.Eth_sendRawTransaction(tx)
+  if err != nil {
+    return fmt.Errorf("Error submitting tx: (%s)", err), ""
+  }
+  return nil, txhash
+}
+
+
+/**
+ * Make a contract call. May be called externally
+ */
+func MakeCall(from string, to string, data string) (error, string) {
+  call := Call{From: from, To: to, Data: data}
+  res, err := client.Eth_call(call)
+  if err != nil {
+    return fmt.Errorf("Error making call (%s)", err), ""
+  }
+  return nil, res
+}
 
 /**
  * Check a receipt for the cumulative gas used. This will be our metric to check

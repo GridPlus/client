@@ -2,14 +2,15 @@ package main;
 
 import (
   "api"
+  "channels"
   "config"
   "fmt"
   "log"
-  "math"
   "os"
   "rpc"
   "time"
 )
+// import "math"
 
 func main() {
   // Setup logging
@@ -24,10 +25,18 @@ func main() {
   log.Println("Starting system. Agent serial number: ", conf.SerialNo)
   fmt.Printf("%s Starting system. Agent serial number: \x1b[4;49;33m%s\x1b[0m\n", DateStr(), conf.SerialNo)
   rpc.ConnectToRPC(conf.Provider)
-  registry_addr, _ := api.GetRegistry(conf.API)
-  usdx_addr, _ := api.GetUSDX(conf.API)
-  log.Println("Got registry address: ", registry_addr)
-  fmt.Printf("%s Registry contract address: \x1b[4;49;33m%s\x1b[0m\n", DateStr(), registry_addr)
+
+  var registry_addr = ""
+  var usdx_addr = ""
+  for registry_addr == "" || usdx_addr == "" {
+    _registry_addr, _ := api.GetRegistry(conf.API)
+    registry_addr = _registry_addr
+    _usdx_addr, _ := api.GetUSDX(conf.API)
+    usdx_addr = _usdx_addr
+    if usdx_addr == "" || registry_addr == "" {
+      time.Sleep(time.Second*10)
+    }
+  }
 
   // If the setup keypair was not registered, something fishy is going on
   check_registered(conf.HashedSerialNo, conf.WalletAddr, registry_addr)
@@ -60,8 +69,19 @@ func main() {
  * @param pkey          Private key of the wallet
  */
 func run(auth_token string, wallet string, serial_hash string, usdx string, hub string, pkey string) {
-  // Get hub address
-  hub_addr, _ := api.GetHubAddr(hub)
+  var hub_addr = ""
+  var channels_addr = ""
+
+  for hub_addr == "" || channels_addr == "" {
+    // Get the addresses from the API
+    _hub_addr, _ := api.GetHubAddr(hub)
+    hub_addr = _hub_addr
+    _channels_addr, _ := api.GetChannelsAddr(hub)
+    channels_addr = _channels_addr
+    if hub_addr == "" || channels_addr == "" {
+      time.Sleep(time.Second*10)
+    }
+  }
 
   for true {
     // Make sure ether balance is high enough to send a transaction.
@@ -71,6 +91,10 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
     needed := gas.Uint64()*gasPrice.Uint64()
     check_ether(needed, wallet, serial_hash, auth_token, hub)
 
+    // Open a payment channel if one is needed
+    id := handle_channel(wallet, channels_addr, hub_addr, usdx, hub, pkey)
+    fmt.Println("id", id)
+/*
 
     // 1. Ping the hub and ask if there are any unpaid bills. This will return
     //    amounts and ids for the bills.
@@ -87,6 +111,7 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
         unpaid_sum += bill.Amount
         unpaid_bill_ids = append(unpaid_bill_ids, bill.BillId)
       }
+
       if unpaid_sum > 0 {
         // ascii colors: http://misc.flogisoft.com/_media/bash/colors_format/colors_and_formatting.sh.png
         fmt.Printf("%s Unpaid amount: \x1b[91m$%.6f\x1b[0m\n", DateStr(), unpaid_sum)
@@ -94,7 +119,7 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
         // 3. Get USDX balance
         decimals := float64(rpc.TokenDecimals(wallet, usdx))
         balance := float64(rpc.TokenBalance(wallet, usdx))
-        var usd_balance = math.Ceil(balance/(math.Pow(10, decimals)))
+        var usd_balance = balance/(math.Pow(10, decimals))
         fmt.Printf("%s USDX balance: \x1b[32m$%.6f\x1b[0m\n", DateStr() , usd_balance)
 
         if usd_balance >= unpaid_sum {
@@ -114,15 +139,35 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
           fmt.Printf("\x1b[91m%s ERROR: Insufficient balance to pay bills.\x1b[0m\n", DateStr())
         }
       }
-
-
     }
-
+*/
     // Wait 10 seconds and execute again
     time.Sleep(time.Second*10)
   }
 }
 
+
+/**
+ * Set up a payment channel if one does not exist. Load it up with a default
+ * amount of USDX tokens.
+ *
+ * @param wallet        Address of this device's wallet
+ * @param channel       Address of the payment channel contract
+ * @param hub_addr      Address of the admin to pay
+ * @param usdx          Address of token contract
+ * @param hub           Full base URI of the hub API
+ * @param pkey          Private key of wallet
+ */
+func handle_channel(wallet string, channel string, hub_addr string, usdx string,
+hub string, pkey string) (string) {
+  id := channels.GetChannelId()
+  if id == "" {
+    amt := uint64(5000000)
+    id := channels.OpenChannel(wallet, channel, usdx, hub_addr, amt, pkey, hub)
+    fmt.Printf("%s Opened payment channel: \x1b[32m%d\x1b[0m wei\n", DateStr(), id)
+  }
+  return id
+}
 
 /**
  * Sanity check to make sure the device was actually registered.
