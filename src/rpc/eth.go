@@ -113,12 +113,33 @@ func TokenBalance(addr string, token string) (uint64) {
   call := Call{From: addr, To: token, Data: "0x70a08231"+Zfill(addr)}
   _balance, err := client.Eth_call(call)
   if err != nil {
-    log.Fatal("Could not get balance: ", err)
+    log.Print("Could not get balance: ", err)
+    return 0
   }
   balance, _ := strconv.ParseUint(_balance, 0, 64)
   return balance
 }
 
+
+/**
+ * Get the token balance of a specific address
+ *
+ * @param token       Token contract address
+ * @param holder      Address holding the balance to be spent
+ * @param spender     Address we are checking allowance for
+ * @return            Balance
+ */
+func TokenAllowance(token string, holder string, spender string) (uint64) {
+  //allowance(address,address)
+  call := Call{From: holder, To: token, Data: "0xdd62ed3e"+Zfill(holder)+Zfill(spender)}
+  _allowance, err := client.Eth_call(call)
+  if err != nil {
+    log.Print("Could not get allowance", err)
+    return 0
+  }
+  allowance, _ := strconv.ParseUint(_allowance, 0 , 64)
+  return allowance
+}
 
 /**
  * Get the ether balance (in wei) of the address in question

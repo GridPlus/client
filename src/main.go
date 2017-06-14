@@ -151,20 +151,35 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
  * Set up a payment channel if one does not exist. Load it up with a default
  * amount of USDX tokens.
  *
- * @param wallet        Address of this device's wallet
- * @param channel       Address of the payment channel contract
- * @param hub_addr      Address of the admin to pay
- * @param usdx          Address of token contract
- * @param hub           Full base URI of the hub API
- * @param pkey          Private key of wallet
+ * @param wallet              Address of this device's wallet
+ * @param channels_addr       Address of the payment channel contract
+ * @param hub_addr            Address of the admin to pay
+ * @param usdx                Address of token contract
+ * @param hub                 Full base URI of the hub API
+ * @param pkey                Private key of wallet
  */
-func handle_channel(wallet string, channel string, hub_addr string, usdx string,
+func handle_channel(wallet string, channels_addr string, hub_addr string, usdx string,
 hub string, pkey string) (string) {
-  id := channels.GetChannelId()
+  id := channels.CheckForChanneId(wallet, hub_addr, channels_addr)
+  amt := uint64(5000000)
+  balance := uint64(1)
   if id == "" {
-    amt := uint64(5000000)
-    id := channels.OpenChannel(wallet, channel, usdx, hub_addr, amt, pkey, hub)
-    fmt.Printf("%s Opened payment channel: \x1b[32m%d\x1b[0m wei\n", DateStr(), id)
+    // Make sure the balance is high enough
+    for balance < amt {
+      _balance := rpc.TokenBalance(wallet, usdx)
+      if balance == 1 && _balance < amt {
+        fmt.Printf("\x1b[31;1mInsufficient token balance to open channel. Need %d, have %d\x1b[0m\n", amt, _balance)
+      }
+      balance = _balance
+      if balance < amt {
+        time.Sleep(time.Second*10)
+      }
+    }
+    // If the balance is high enough, open a channel
+    id := channels.OpenChannel(wallet, channels_addr, usdx, hub_addr, amt, pkey, hub)
+    fmt.Printf("%s Opened payment channel: \x1b[32m%s\x1b[0m \n", DateStr(), id)
+  } else {
+    fmt.Printf("%s Found existing payment channel: \x1b[32m%s\x1b[0m \n", DateStr(), id)
   }
   return id
 }
@@ -328,5 +343,6 @@ func check_ether(needed uint64, wallet string, serial_hash string, auth_token st
     }
     // Update the balance and see if we need more faucet (we shouldn't)
     balance = rpc.EtherBalance(wallet)
+    fmt.Printf("%s New balance: \x1b[32m%d\x1b[0m wei\n", DateStr(), balance)
   }
 }
