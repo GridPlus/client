@@ -8,14 +8,21 @@ import (
   "github.com/ethereum/go-ethereum/crypto/sha3"
   "encoding/hex"
   "math/big"
+  "strconv"
 )
 import "fmt"
-// import "encoding/json"
 import "github.com/ethereum/go-ethereum/core/types"
 import "github.com/ethereum/go-ethereum/common"
 import "github.com/ethereum/go-ethereum/crypto"
-// import "math/rand"
-// import "log"
+
+
+type ChannelMsg struct {
+  MsgHash string `json:"msg_hash"`
+  Value string `json:"value"`
+  V string `json:"v"`
+  R string `json:"r"`
+  S string `json:"s"`
+}
 
 /**
  * Hash a byte array. This is a keccak 256 sha3 hash.
@@ -42,7 +49,6 @@ func Ecsign(hash []byte, prv *ecdsa.PrivateKey) (string, error) {
   if err != nil { return "", err }
   return hex.EncodeToString(sig), nil
 }
-
 
 /**
  * Convert transaction parameters into a raw transaction string that can be sent
@@ -75,4 +81,47 @@ func GetRawTx(
     // Recast to a "Transactions" object and get the RLP payload (raw transaction)
     t := types.Transactions{signed_tx}
     return fmt.Sprintf("0x%x", t.GetRlp(0)), nil
+}
+
+
+/**
+ * Sign a message that will be sent to a payment channel.
+ *
+ * @param  channel_id    0x-prefixed bytes32 id of payment channel
+ * @param  amount        amount to send (hex string)
+ * @param  pkey          Private key of signer
+ * @return               Message, signature, and amount
+ */
+func SignPayment(channel_id string, amount string, pkey string) (*ChannelMsg) {
+  var resp = ChannelMsg{}
+
+  // Form the message to be signed sha3(channel_id, value)
+  var str = zfill(channel_id) + zfill(amount)
+  msg, _ := hex.DecodeString(str)
+  msg_hash := Keccak256Hash(msg)
+
+  // Instantiate a private key oject for signature
+  privkey, _ := crypto.HexToECDSA(pkey)
+
+  // Sign the message and deconstruct the signature
+  sig, _ := Ecsign(msg_hash, privkey)
+  resp.R = sig[:64]
+  resp.S = sig[64:128]
+  v, _ := strconv.ParseUint(sig[129:], 0, 64)
+  resp.V = fmt.Sprintf("%x", v + 27)
+  resp.MsgHash = fmt.Sprintf("%x",msg_hash)
+  resp.Value = amount
+  return &resp
+}
+
+
+// Same as rpc.Zfill, but rpc import isn't allowed in this module
+func zfill(s string) (string) {
+  // Cut off any rouge 0x prefixes
+  if (s[:2] == "0x") { s = s[2:]}
+  var pad = ""
+  for i := 0; i < (64-len(s)); i++ {
+		pad += "0"
+	}
+  return pad + s
 }

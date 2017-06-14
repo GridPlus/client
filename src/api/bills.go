@@ -27,8 +27,12 @@ type PayBillsRes struct {
 }
 
 type BillPayReq struct {
-	Tx string `json:"tx"`
 	BillIds []int `json:"bill_ids"`
+	Msg string `json:"msg"`
+	V string `json:"v"`
+	R string `json:"r"`
+	S string `json:"s"`
+	Value string `json:"value"`
 }
 
 /**
@@ -68,14 +72,12 @@ func GetBills(serial_hash string, api string, token string) (*[]Bill, error) {
  * Get an array of Bill objects from the API. This is an authenticated request,
  * so a valid JSON web token must be included
  *
- * @param  ids           Array of bill_ids (SQL ids from the API)
- * @param  tx            Raw transaction string signed by agent
+ * @param  payload       Filled in BillPayReq object
  * @param  api           Base URI for the hub API
  * @param  auth_token    JSON web token for the agent
  * @return               (array of bill ids, error)
  */
-func PayBills(ids []int, tx string, api string, auth_token string) ([]int, error) {
-	payload := BillPayReq{tx, ids}
+func PayBills(payload *BillPayReq, api string, auth_token string) ([]int, error) {
 	b, _ := json.Marshal(payload)
 	var result = new(PayBillsRes)
 	client := &http.Client{}

@@ -6,11 +6,12 @@ import (
   "config"
   "fmt"
   "log"
+  "math"
   "os"
   "rpc"
   "time"
+  "sig"
 )
-// import "math"
 
 func main() {
   // Setup logging
@@ -83,6 +84,11 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
     }
   }
 
+  channel_id := channels.CheckForChanneId(wallet, hub_addr, channels_addr)
+  if channel_id != "" {
+    fmt.Printf("%s Found existing payment channel: \x1b[32m%s\x1b[0m \n", DateStr(), channel_id)
+  }
+
   for true {
     // Make sure ether balance is high enough to send a transaction.
     // NOTE: We won't be sending a transaction, but we need to make sure if
@@ -91,10 +97,10 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
     needed := gas.Uint64()*gasPrice.Uint64()
     check_ether(needed, wallet, serial_hash, auth_token, hub)
 
-    // Open a payment channel if one is needed
-    id := handle_channel(wallet, channels_addr, hub_addr, usdx, hub, pkey)
-    fmt.Println("id", id)
-/*
+    // Open a payment channel if one is needed. This will skip if the existing
+    // channel is still good.
+    _channel_id := handle_channel(wallet, channels_addr, hub_addr, usdx, hub, pkey)
+    channel_id = _channel_id
 
     // 1. Ping the hub and ask if there are any unpaid bills. This will return
     //    amounts and ids for the bills.
@@ -126,10 +132,20 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
           // Round to the nearest USDX atomic unit
           var to_pay = math.Ceil(unpaid_sum*math.Pow(10, decimals))
 
+          // Sign message that will be sent to the payment channel by the hub
           to_pay_hex := fmt.Sprintf("%x", int64(to_pay))
-          data := fmt.Sprintf("0xa9059cbb%s%s", rpc.Zfill(hub_addr), rpc.Zfill(to_pay_hex))
-          tx := rpc.DefaultRawTx(wallet, usdx, data, pkey, hub)
-          ids, err := api.PayBills(unpaid_bill_ids, tx, hub, auth_token)
+          proof := sig.SignPayment(channel_id, to_pay_hex, pkey)
+
+          // Load up the request payload
+          var payload = api.BillPayReq{}
+          payload.BillIds = unpaid_bill_ids
+          payload.Msg = proof.MsgHash
+          payload.V = proof.V
+          payload.R = proof.R
+          payload.S = proof.S
+          payload.Value = proof.Value
+
+          ids, err := api.PayBills(&payload, hub, auth_token)
           if err != nil {
             fmt.Printf("\x1b[91m%s ERROR: Failed to pay bills.\x1b[0m\n", DateStr())
           } else {
@@ -140,12 +156,11 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
         }
       }
     }
-*/
+
     // Wait 10 seconds and execute again
     time.Sleep(time.Second*10)
   }
 }
-
 
 /**
  * Set up a payment channel if one does not exist. Load it up with a default
@@ -177,9 +192,7 @@ hub string, pkey string) (string) {
     }
     // If the balance is high enough, open a channel
     id := channels.OpenChannel(wallet, channels_addr, usdx, hub_addr, amt, pkey, hub)
-    fmt.Printf("%s Opened payment channel: \x1b[32m%s\x1b[0m \n", DateStr(), id)
-  } else {
-    fmt.Printf("%s Found existing payment channel: \x1b[32m%s\x1b[0m \n", DateStr(), id)
+    fmt.Printf("%s Opened new payment channel: \x1b[32m%s\x1b[0m \n", DateStr(), id)
   }
   return id
 }
