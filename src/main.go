@@ -72,6 +72,7 @@ func main() {
 func run(auth_token string, wallet string, serial_hash string, usdx string, hub string, pkey string) {
   var hub_addr = ""
   var channels_addr = ""
+  var channel_balance = 0
 
   for hub_addr == "" || channels_addr == "" {
     // Get the addresses from the API
@@ -109,51 +110,62 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
       fmt.Printf("\x1b[91m%s ERROR: Failed to get unpaid bills (%e)\x1b[0m\n", DateStr(), err)
       log.Println("Encountered error getting bills (%s)", err)
     } else {
-      // 2. Total the unpaid bills and sign a message that will move that many
-      //    tokens to the address provided by the hub.
-      var unpaid_sum float64
-      var unpaid_bill_ids []int
-      for _, bill := range *bills {
-        unpaid_sum += bill.Amount
-        unpaid_bill_ids = append(unpaid_bill_ids, bill.BillId)
-      }
 
-      if unpaid_sum > 0 {
-        // ascii colors: http://misc.flogisoft.com/_media/bash/colors_format/colors_and_formatting.sh.png
-        fmt.Printf("%s Unpaid amount: \x1b[91m$%.6f\x1b[0m\n", DateStr(), unpaid_sum)
-
-        // 3. Get USDX balance
-        decimals := float64(rpc.TokenDecimals(wallet, usdx))
-        balance := float64(rpc.TokenBalance(wallet, usdx))
-        var usd_balance = balance/(math.Pow(10, decimals))
-        fmt.Printf("%s USDX balance: \x1b[32m$%.6f\x1b[0m\n", DateStr() , usd_balance)
-
-        if usd_balance >= unpaid_sum {
-          // Round to the nearest USDX atomic unit
-          var to_pay = math.Ceil(unpaid_sum*math.Pow(10, decimals))
-
-          // Sign message that will be sent to the payment channel by the hub
-          to_pay_hex := fmt.Sprintf("%x", int64(to_pay))
-          proof := sig.SignPayment(channel_id, to_pay_hex, pkey)
-
-          // Load up the request payload
-          var payload = api.BillPayReq{}
-          payload.BillIds = unpaid_bill_ids
-          payload.Msg = proof.MsgHash
-          payload.V = proof.V
-          payload.R = proof.R
-          payload.S = proof.S
-          payload.Value = proof.Value
-
-          ids, err := api.PayBills(&payload, hub, auth_token)
-          if err != nil {
-            fmt.Printf("\x1b[91m%s ERROR: Failed to pay bills.\x1b[0m\n", DateStr())
-          } else {
-            fmt.Printf("\x1b[32m%s Successfully paid %d bills.\x1b[0m\n", DateStr(), len(ids))
-          }
-        } else {
-          fmt.Printf("\x1b[91m%s ERROR: Insufficient balance to pay bills.\x1b[0m\n", DateStr())
+      // 3. Get the total amount committed to the channel
+      channel_sum, err3 := api.GetChannelSum(channel_id, hub, auth_token)
+      if err3 != nil {
+        fmt.Printf("\x1b[91m%s ERROR: Failed to get channel sum (%e)\x1b[0m\n", DateStr(), err3)
+        log.Println("Encountered error getting bills (%s)", err)
+      } else {
+        // 2. Total the unpaid bills and sign a message that will move that many
+        //    tokens to the address provided by the hub.
+        var unpaid_sum float64
+        var unpaid_bill_ids []int
+        for _, bill := range *bills {
+          unpaid_sum += bill.Amount
+          unpaid_bill_ids = append(unpaid_bill_ids, bill.BillId)
         }
+
+        if unpaid_sum > 0 {
+          // ascii colors: http://misc.flogisoft.com/_media/bash/colors_format/colors_and_formatting.sh.png
+          fmt.Printf("%s Unpaid amount: \x1b[91m$%.6f\x1b[0m\n", DateStr(), unpaid_sum)
+
+          // 3. Get USDX balance
+          decimals := float64(rpc.TokenDecimals(wallet, usdx))
+          balance := float64(rpc.TokenBalance(wallet, usdx))
+          var usd_balance = balance/(math.Pow(10, decimals))
+
+          if usd_balance >= unpaid_sum {
+            // Round to the nearest USDX atomic unit
+            var to_pay = int(math.Ceil((unpaid_sum + channel_sum) * math.Pow(10, decimals)))
+
+            // Sign message that will be sent to the payment channel by the hub
+            to_pay_hex := fmt.Sprintf("%x", int64(to_pay))
+            proof := sig.SignPayment(channel_id, to_pay_hex, pkey)
+
+            // Load up the request payload
+            var payload = api.BillPayReq{}
+            payload.BillIds = unpaid_bill_ids
+            payload.Msg = proof.MsgHash
+            payload.V = proof.V
+            payload.R = proof.R
+            payload.S = proof.S
+            payload.Value = proof.Value
+
+            err, ids, remaining := api.PayBills(&payload, hub, auth_token)
+            if err != nil {
+              fmt.Printf("\x1b[91m%s ERROR: Failed to pay bills.\x1b[0m\n", DateStr())
+            } else {
+              channel_balance = remaining
+              var channel_bal_disp = float64(channel_balance)/(math.Pow(10, decimals))
+              fmt.Printf("\x1b[32m%s Successfully paid %d bills.\x1b[0m\n", DateStr(), len(ids))
+              fmt.Printf("%s Channel balance: \x1b[32m$%.6f\x1b[0m USDX reserve: \x1b[32m$%.6f\x1b[0m\n", DateStr(), channel_bal_disp, usd_balance)
+            }
+          } else {
+            fmt.Printf("\x1b[91m%s ERROR: Insufficient balance to pay bills.\x1b[0m\n", DateStr())
+          }
+        }
+
       }
     }
 
