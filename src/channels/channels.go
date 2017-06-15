@@ -5,6 +5,8 @@ import "log"
 import "rpc"
 import "time"
 import "fmt"
+import "strconv"
+
 type Channel struct {
   Id string `json:"id"`
   Token string `json:"token"`
@@ -23,7 +25,6 @@ var channel = Channel{}
 func OpenChannel(from string, channel_addr string, token string,
 to string, _amount uint64, pkey string, API string) (string) {
   amount := fmt.Sprintf("%x", _amount)
-
   // 1. Set an allowance
   var allowance_data = "0x095ea7b3" + rpc.Zfill(channel_addr) + rpc.Zfill(string(amount))
   allowance_tx := rpc.DefaultRawTx(from, token, allowance_data, pkey, API)
@@ -49,18 +50,16 @@ to string, _amount uint64, pkey string, API string) (string) {
       time.Sleep(time.Second*10)
     }
   }
-
   // 2. Open the channel
   var data = "0xcfa40e4f" + rpc.Zfill(token) + rpc.Zfill(to) + rpc.Zfill(string(amount))
-  var gas = uint64(150000)
+  var gas = uint64(200000)
   _, _gasPrice := rpc.DefaultGas(API)
   var gasPrice = _gasPrice.Uint64()
-  rawtx := rpc.RawTx(from, channel_addr, data, pkey, gas, gasPrice, 0)
-
   var txhash = ""
   for txhash == "" {
+    rawtx := rpc.RawTx(from, channel_addr, data, pkey, gas, gasPrice, 0)
     err, _txhash := rpc.SendRaw(rawtx)
-    if err != nil {
+    if err != nil || _txhash == "" {
       log.Print("Error opening channel (%s)", err)
       time.Sleep(time.Second*10)
     } else {
@@ -92,7 +91,6 @@ to string, _amount uint64, pkey string, API string) (string) {
       time.Sleep(time.Second*10)
     }
   }
-
   return channel.Id
 }
 
@@ -117,10 +115,22 @@ func CheckForChanneId(from string, to string, channels_addr string) (string) {
     return ""
   } else {
     channel.Id = id
+    // Get the deposit too
+    var deposit_data = "0x2f748d7b" + rpc.Zfill(id)
+    err2, deposit := rpc.MakeCall(from, channels_addr, deposit_data)
+    if err2 != nil {
+      log.Printf("Could not get deposit from channel %s: %s", id, err2)
+    } else {
+      channel.Deposit, _ = strconv.ParseUint(deposit, 0, 64)
+    }
     return id
   }
 }
 
 func GetChannelId() (string) {
   return channel.Id
+}
+
+func GetDeposit() (uint64) {
+  return channel.Deposit
 }

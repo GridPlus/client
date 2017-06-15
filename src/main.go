@@ -112,7 +112,7 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
     } else {
 
       // 3. Get the total amount committed to the channel
-      channel_sum, err3 := api.GetChannelSum(channel_id, hub, auth_token)
+      channel_sum, err3 := api.GetChannelSum(channel_id, hub, auth_token) // Total amount already commited to channel
       if err3 != nil {
         fmt.Printf("\x1b[91m%s ERROR: Failed to get channel sum (%e)\x1b[0m\n", DateStr(), err3)
         log.Println("Encountered error getting bills (%s)", err)
@@ -130,15 +130,19 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
           // ascii colors: http://misc.flogisoft.com/_media/bash/colors_format/colors_and_formatting.sh.png
           fmt.Printf("%s Unpaid amount: \x1b[91m$%.6f\x1b[0m\n", DateStr(), unpaid_sum)
 
-          // 3. Get USDX balance
+          // 3. Get balance in the channel
           decimals := float64(rpc.TokenDecimals(wallet, usdx))
-          balance := float64(rpc.TokenBalance(wallet, usdx))
-          var usd_balance = balance/(math.Pow(10, decimals))
+          // Total amount available to channel
+          channel_deposit := float64(channels.GetDeposit())
+          // Balance of the device (external to channel)
+          token_balance := float64(rpc.TokenBalance(wallet, usdx)) / math.Pow(10, decimals)
+          // Total remainder (in dollars) of the channel
+          var usd_balance = (channel_deposit-channel_sum)/(math.Pow(10, decimals))
+
 
           if usd_balance >= unpaid_sum {
             // Round to the nearest USDX atomic unit
-            var to_pay = int(math.Ceil((unpaid_sum + channel_sum) * math.Pow(10, decimals)))
-
+            var to_pay = int(math.Ceil(channel_sum + (unpaid_sum * math.Pow(10, decimals)) ))
             // Sign message that will be sent to the payment channel by the hub
             to_pay_hex := fmt.Sprintf("%x", int64(to_pay))
             proof := sig.SignPayment(channel_id, to_pay_hex, pkey)
@@ -159,9 +163,10 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
               channel_balance = remaining
               var channel_bal_disp = float64(channel_balance)/(math.Pow(10, decimals))
               fmt.Printf("\x1b[32m%s Successfully paid %d bills.\x1b[0m\n", DateStr(), len(ids))
-              fmt.Printf("%s Channel balance: \x1b[32m$%.6f\x1b[0m USDX reserve: \x1b[32m$%.6f\x1b[0m\n", DateStr(), channel_bal_disp, usd_balance)
+              fmt.Printf("%s Channel balance: \x1b[32m$%.6f\x1b[0m USDX reserve: \x1b[32m$%.6f\x1b[0m\n", DateStr(), channel_bal_disp, token_balance)
             }
           } else {
+            fmt.Println("unpaid sum", unpaid_sum)
             fmt.Printf("\x1b[91m%s ERROR: Insufficient balance to pay bills.\x1b[0m\n", DateStr())
           }
         }
@@ -188,22 +193,26 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
 func handle_channel(wallet string, channels_addr string, hub_addr string, usdx string,
 hub string, pkey string) (string) {
   id := channels.CheckForChanneId(wallet, hub_addr, channels_addr)
-  amt := uint64(5000000)
-  balance := uint64(1)
+  // Open a channel with the existing token balance
+  balance := rpc.TokenBalance(wallet, usdx)
+  HARD_MIN := uint64(500000000)  // Minimum of $5 deposited to open a channel
+  err_disp := false
   if id == "" {
     // Make sure the balance is high enough
-    for balance < amt {
+    for balance < HARD_MIN {
       _balance := rpc.TokenBalance(wallet, usdx)
-      if balance == 1 && _balance < amt {
-        fmt.Printf("\x1b[31;1mInsufficient token balance to open channel. Need %d, have %d\x1b[0m\n", amt, _balance)
-      }
-      balance = _balance
-      if balance < amt {
+      if _balance < HARD_MIN {
+        if err_disp == false {
+          fmt.Printf("\x1b[31;1mInsufficient token balance to open channel. Need at least %d, have %d. Please deposit funds.\x1b[0m\n", HARD_MIN, _balance)
+          err_disp = true
+        }
         time.Sleep(time.Second*10)
+      }  else {
+        balance = _balance
       }
     }
     // If the balance is high enough, open a channel
-    id := channels.OpenChannel(wallet, channels_addr, usdx, hub_addr, amt, pkey, hub)
+    id := channels.OpenChannel(wallet, channels_addr, usdx, hub_addr, balance, pkey, hub)
     fmt.Printf("%s Opened new payment channel: \x1b[32m%s\x1b[0m \n", DateStr(), id)
   }
   return id
