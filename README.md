@@ -1,4 +1,4 @@
-![Logo](images/gridlogo.png)
+![Logo](images/color-logo.png)
 # Agent Client
 This repo contains the Grid+ client, which is a binary meant to live on
 the smart agent device (any small system-on-a-chip). Once the agent is registered and claimed
