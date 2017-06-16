@@ -38,14 +38,14 @@ func GetRegistry(api string) (string, error) {
 }
 
 /**
- * Query the API for the USDX token contract address.
+ * Query the API for the BOLT token contract address.
  *
  * @param  api    Full base URI of the api
  * @return        (contract address, error)
  */
-func GetUSDX(api string) (string, error) {
+func GetBOLT(api string) (string, error) {
   var result = new(GetRes)
-  res, err := http.Get(api+"/USDX")
+  res, err := http.Get(api+"/BOLT")
   if err != nil {
     return "", fmt.Errorf("Could not get registry address: ", err)
   } else {

@@ -28,13 +28,13 @@ func main() {
   rpc.ConnectToRPC(conf.Provider)
 
   var registry_addr = ""
-  var usdx_addr = ""
-  for registry_addr == "" || usdx_addr == "" {
+  var bolt_addr = ""
+  for registry_addr == "" || bolt_addr == "" {
     _registry_addr, _ := api.GetRegistry(conf.API)
     registry_addr = _registry_addr
-    _usdx_addr, _ := api.GetUSDX(conf.API)
-    usdx_addr = _usdx_addr
-    if usdx_addr == "" || registry_addr == "" {
+    _bolt_addr, _ := api.GetBOLT(conf.API)
+    bolt_addr = _bolt_addr
+    if bolt_addr == "" || registry_addr == "" {
       time.Sleep(time.Second*10)
     }
   }
@@ -55,7 +55,7 @@ func main() {
   fmt.Printf("%s Balance: \x1b[32m%d\x1b[0m wei\n", DateStr(), balance)
   fmt.Printf("\x1b[32m%s Setup complete. Running.\x1b[0m\n", DateStr())
   // Run program
-  run(auth_token, conf.WalletAddr, conf.HashedSerialNo, usdx_addr, conf.API, conf.WalletPkey)
+  run(auth_token, conf.WalletAddr, conf.HashedSerialNo, bolt_addr, conf.API, conf.WalletPkey)
 }
 
 
@@ -65,11 +65,11 @@ func main() {
  * @param auth_token    Used to query authenticated routes
  * @param wallet        Wallet address (identifier of the device)
  * @param serial_hash   Hash of agent's serial number
- * @param usdx          Address of USDX token contract
+ * @param bolt          Address of BOLT token contract
  * @param hub           Full base url of the hub
  * @param pkey          Private key of the wallet
  */
-func run(auth_token string, wallet string, serial_hash string, usdx string, hub string, pkey string) {
+func run(auth_token string, wallet string, serial_hash string, bolt string, hub string, pkey string) {
   var hub_addr = ""
   var channels_addr = ""
   var channel_balance = 0
@@ -100,7 +100,7 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
 
     // Open a payment channel if one is needed. This will skip if the existing
     // channel is still good.
-    _channel_id := handle_channel(wallet, channels_addr, hub_addr, usdx, hub, pkey)
+    _channel_id := handle_channel(wallet, channels_addr, hub_addr, bolt, hub, pkey)
     channel_id = _channel_id
 
     // 1. Ping the hub and ask if there are any unpaid bills. This will return
@@ -131,17 +131,17 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
           fmt.Printf("%s Unpaid amount: \x1b[91m$%.6f\x1b[0m\n", DateStr(), unpaid_sum)
 
           // 3. Get balance in the channel
-          decimals := float64(rpc.TokenDecimals(wallet, usdx))
+          decimals := float64(rpc.TokenDecimals(wallet, bolt))
           // Total amount available to channel
           channel_deposit := float64(channels.GetDeposit())
           // Balance of the device (external to channel)
-          token_balance := float64(rpc.TokenBalance(wallet, usdx)) / math.Pow(10, decimals)
+          token_balance := float64(rpc.TokenBalance(wallet, bolt)) / math.Pow(10, decimals)
           // Total remainder (in dollars) of the channel
           var usd_balance = (channel_deposit-channel_sum)/(math.Pow(10, decimals))
 
 
           if usd_balance >= unpaid_sum {
-            // Round to the nearest USDX atomic unit
+            // Round to the nearest BOLT atomic unit
             var to_pay = int(math.Ceil(channel_sum + (unpaid_sum * math.Pow(10, decimals)) ))
             // Sign message that will be sent to the payment channel by the hub
             to_pay_hex := fmt.Sprintf("%x", int64(to_pay))
@@ -163,10 +163,9 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
               channel_balance = remaining
               var channel_bal_disp = float64(channel_balance)/(math.Pow(10, decimals))
               fmt.Printf("\x1b[32m%s Successfully paid %d bills.\x1b[0m\n", DateStr(), len(ids))
-              fmt.Printf("%s Channel balance: \x1b[32m$%.6f\x1b[0m USDX reserve: \x1b[32m$%.6f\x1b[0m\n", DateStr(), channel_bal_disp, token_balance)
+              fmt.Printf("%s Channel balance: \x1b[32m$%.6f\x1b[0m BOLT reserve: \x1b[32m$%.6f\x1b[0m\n", DateStr(), channel_bal_disp, token_balance)
             }
           } else {
-            fmt.Println("unpaid sum", unpaid_sum)
             fmt.Printf("\x1b[91m%s ERROR: Insufficient balance to pay bills.\x1b[0m\n", DateStr())
           }
         }
@@ -181,26 +180,26 @@ func run(auth_token string, wallet string, serial_hash string, usdx string, hub 
 
 /**
  * Set up a payment channel if one does not exist. Load it up with a default
- * amount of USDX tokens.
+ * amount of BOLT tokens.
  *
  * @param wallet              Address of this device's wallet
  * @param channels_addr       Address of the payment channel contract
  * @param hub_addr            Address of the admin to pay
- * @param usdx                Address of token contract
+ * @param bolt                Address of token contract
  * @param hub                 Full base URI of the hub API
  * @param pkey                Private key of wallet
  */
-func handle_channel(wallet string, channels_addr string, hub_addr string, usdx string,
+func handle_channel(wallet string, channels_addr string, hub_addr string, bolt string,
 hub string, pkey string) (string) {
   id := channels.CheckForChanneId(wallet, hub_addr, channels_addr)
   // Open a channel with the existing token balance
-  balance := rpc.TokenBalance(wallet, usdx)
+  balance := rpc.TokenBalance(wallet, bolt)
   HARD_MIN := uint64(500000000)  // Minimum of $5 deposited to open a channel
   err_disp := false
   if id == "" {
     // Make sure the balance is high enough
     for balance < HARD_MIN {
-      _balance := rpc.TokenBalance(wallet, usdx)
+      _balance := rpc.TokenBalance(wallet, bolt)
       if _balance < HARD_MIN {
         if err_disp == false {
           fmt.Printf("\x1b[31;1mInsufficient token balance to open channel. Need at least %d, have %d. Please deposit funds.\x1b[0m\n", HARD_MIN, _balance)
@@ -212,7 +211,7 @@ hub string, pkey string) (string) {
       }
     }
     // If the balance is high enough, open a channel
-    id := channels.OpenChannel(wallet, channels_addr, usdx, hub_addr, balance, pkey, hub)
+    id := channels.OpenChannel(wallet, channels_addr, bolt, hub_addr, balance, pkey, hub)
     fmt.Printf("%s Opened new payment channel: \x1b[32m%s\x1b[0m \n", DateStr(), id)
   }
   return id
