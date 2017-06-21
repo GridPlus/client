@@ -29,10 +29,17 @@ func main() {
 
   var registry_addr = ""
   var bolt_addr = ""
+  fmt.Printf("%s Fetching routing addresses.\n", DateStr())
   for registry_addr == "" || bolt_addr == "" {
-    _registry_addr, _ := api.GetRegistry(conf.API)
+    _registry_addr, err1 := api.GetRegistry(conf.API)
+    if err1 != nil {
+      log.Println("Error fetching registry address", err1)
+    }
     registry_addr = _registry_addr
-    _bolt_addr, _ := api.GetBOLT(conf.API)
+    _bolt_addr, err2 := api.GetBOLT(conf.API)
+    if err2 != nil {
+      log.Println("Error fetching BOLT address", err2)
+    }
     bolt_addr = _bolt_addr
     if bolt_addr == "" || registry_addr == "" {
       time.Sleep(time.Second*10)
@@ -41,12 +48,10 @@ func main() {
 
   // If the setup keypair was not registered, something fishy is going on
   check_registered(conf.HashedSerialNo, conf.WalletAddr, registry_addr)
-
   // Add the wallet address to the registrar
   add_wallet(conf.WalletAddr, conf.HashedSerialNo, conf.SetupAddr, conf.SetupPkey, registry_addr, conf.API)
   // System cannot proceed until agent is registered
   check_claimed(conf.HashedSerialNo, registry_addr)
-
   // Authenticate the agent to use the API
   auth_token := authenticate(conf.WalletAddr, conf.WalletPkey, conf.API)
 
