@@ -230,11 +230,22 @@ hub string, pkey string) (string) {
  * @param registry       Address of the registry contract
  */
 func check_registered(serial_hash string, wallet string, registry string) {
+  fmt.Printf("%s Waiting for registration confirmation.\n", DateStr())
   // Check if the setup key is registered
   reg := rpc.CheckRegistered(wallet, serial_hash, registry)
   if reg == false {
+    log.Println("Serial hash not registered with Grid+ :", serial_hash)
+    log.Println("Please contact Grid+ with your serial number for assistance.")
+    log.Println("Pausing setup until serial number is registered.")
+    fmt.Printf("\x1b[31;1mDevice not registered. Please contact Grid+ with your serial number.\x1b[0m\n")
+  }
+  for reg == false {
     // If it isn't registered, someone is probably trying to spoof some data.
-    log.Panic("Serial number not registered with Grid+")
+    // Nevertheless, throw it in a loop.
+    log.Println("Serial number not registered with Grid+")
+    time.Sleep(time.Second*10)
+    _reg := rpc.CheckRegistered(wallet, serial_hash, registry)
+    reg = _reg
   }
   return
 }
