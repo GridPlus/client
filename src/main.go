@@ -242,7 +242,6 @@ func check_registered(serial_hash string, wallet string, registry string) {
   for reg == false {
     // If it isn't registered, someone is probably trying to spoof some data.
     // Nevertheless, throw it in a loop.
-    log.Println("Serial number not registered with Grid+")
     time.Sleep(time.Second*10)
     _reg := rpc.CheckRegistered(wallet, serial_hash, registry)
     reg = _reg

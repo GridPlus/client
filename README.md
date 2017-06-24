@@ -89,15 +89,25 @@ Once that's complete, you can proceed to getting started with Grid+. Click "next
 
 <img src="images/register_grid.png" width="600">
 
+### 6. Give your agent some bolt
 
-### 6. Look at your usage data
+Click the button that says "Get BOLT". This will send your metamask account some BOLT. Now go to the "balances" tab.
+
+![Balances](images/Balances.png)
+
+You should have 5 BOLT, which you can deposit to your agent using the bar on the right.
+
+![Deposit](images/Deposit.png)
+
+If you go back to your console, you should see that your agent has opened a payment channel with the Grid+ hub.
+
+### 7. Look at your usage data
 
 You should now see a chart of your usage data. If you don't see anything, just wait a minute or two and refresh.
 
 ![Usage data](images/data.png)
 
 **Note: For the demo, this is randomly generated data, but in the production app you would see how much energy you are consuming and how much it is costing you.**
-
 
 ### Troubleshooting
 Here are some common issues and solutions. Note that errors are, by default, logged to `src/agent.log`.
