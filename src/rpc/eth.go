@@ -91,10 +91,10 @@ func CheckRegistry(from string, hashed_serial string, address string, registry s
  */
 func CheckClaimed(serial_hash string, registry string) (bool) {
   // claimed(bytes32) --> c884ef83
-  call := Call{From: serial_hash, To: registry, Data: "0xcc3c0f06"+serial_hash}
+  call := Call{From: registry, To: registry, Data: "0xcc3c0f06"+serial_hash}
   claimed, err := client.Eth_call(call)
   if err != nil {
-    log.Fatal("Could not check if agent was claimed: ", err)
+    log.Println("Could not check if agent was claimed: ", err)
   }
   pass, _ := strconv.ParseUint(claimed, 0, 64)
   if pass == 0 { return false }
