@@ -216,7 +216,7 @@ hub string, pkey string) (string) {
       }
     }
     // If the balance is high enough, open a channel
-    id := channels.OpenChannel(wallet, channels_addr, bolt, hub_addr, balance, pkey, hub)
+    id = channels.OpenChannel(wallet, channels_addr, bolt, hub_addr, balance, pkey, hub)
     fmt.Printf("%s Opened new payment channel: \x1b[32m%s\x1b[0m \n", DateStr(), id)
   }
   return id
