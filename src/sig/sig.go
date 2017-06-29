@@ -1,5 +1,5 @@
 // Util for signing transactions and messages
-package sig
+package sig;
 
 import (
   "crypto/ecdsa"
