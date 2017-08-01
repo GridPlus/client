@@ -1,3 +1,5 @@
+**Update: We are changing the customer-facing app to mobile and migrating to another test network. This setup phase is now deprecated, but the agent client itself is still up to date. This setup will be updated once the mobile app is stable**
+
 ![Logo](images/color-logo.png)
 # Agent Client
 This repo contains the Grid+ client, which is a binary meant to live on
