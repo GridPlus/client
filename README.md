@@ -17,7 +17,7 @@ The first step is set up a simulated agent device. This consists of three pieces
 To generate this information, call the following endpoint:
 
 ```
-/SetupKey/:user
+https://app.gridplus.io/SetupKey/:user
 ```
 
 `:user` can be any string you wish to use as an identifier. If you lose your setup information, you can call this endpoint to retrieve it at any time.
@@ -57,7 +57,7 @@ You will now need to generate an Ethereum wallet and determine your address. Mak
 
 You will need to make a transaction to the Ethereum network telling the Registry contract that you own the device you are claiming.
 
-First, get the address of the Registry contract by calling the Grid+ endpoint `/Registry`.
+First, get the address of the Registry contract by calling the Grid+ endpoint `https://app.gridplus.io/Registry`.
 
 Next, form the data for the transaction you will send:
 
