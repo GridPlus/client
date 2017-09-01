@@ -74,3 +74,221 @@ Setup complete. Running.
 ```
 
 Your agent is now set up.
+
+
+# Grid+ API Documentation
+
+The following is a list of endpoints that are used to connect to the Grid+ hub. The agent client makes a connection with this API.
+
+All routes originate from `https://app.gridplus.io:3001`
+
+## Authentication
+
+Authenticated endpoints can only be reached by registered (whitelisted) agent devices.
+
+Once your device is registered on the Registry contract, you may request an authentication token from the Grid+ hub:
+
+#### GET /AuthDatum
+
+Query this endpoint to get the data string that needs to be signed by a registered key pair.
+
+Returns:
+```
+{
+  "result" : <String>
+}
+```
+
+#### POST /Authenticate
+
+Send a decomposed ECDSA signature of the data returned from `/AuthDatum` and receive an authentication token. An example signature decomposition is:
+
+```
+var ethutil = require('ethereumjs-util')
+
+var message = ethutil.toBuffer(auth_datum)
+let datum_hash = ethutil.sha3(message);
+let pkey = new Buffer(myPrivateKeyString, 'hex');
+let sig = ethutil.ecsign(datum_hash, pkey);
+sig.r = sig.r.toString('hex')
+sig.s = sig.s.toString('hex')
+```
+
+Request:
+```
+{
+  "owner": <String> # The address that made the signature
+  "sig": {
+    "v": <Integer> # 27 or 28
+    "r": <String>
+    "s": <String>
+  },
+  "personal": <Boolean> # OPTIONAL, true if this signature came from metamask's signing library
+}
+```
+
+Returns:
+
+```
+{
+  "reslt": <String> # Authentication token
+}
+```
+
+### Making an Authenticated Request
+
+Once the user has an authentication token, it can be included either in the body of the request (for `POST` requests) or as a header with title `x-access-token`.
+
+### Token Expiration
+
+If a token becomes invalid, it may have expired. A new one can be created through the same process (`/AuthDatum` + `/Authenticate`) at any time.
+
+## Address Routes
+
+Various routes exist that return the Ethereum address of the contract in question. They are all unauthenticated `GET` requests that return the following data:
+
+```
+{
+  "result": <String> # Address of the contract in question
+}
+```
+
+The following routes exist:
+
+* `GET /Registry`  # The registry contract address
+* `GET /BOLT`      # The BOLT token contract address
+* `GET /Hub`       # The address of the Grid+ token recipient (i.e. the counterparty on all transactions)
+* `GET /Channels`  # The address of the payment channel contract
+
+All addresses are currently on the **Ropsten test network**.
+
+## Default Constants
+
+The Grid+ hub may make requests to the Ethereum chain on the user's behalf. There are certain default parameters that can be overwritten. The defaults can be queried from these endpoints.
+
+#### GET /Gas
+
+This returns the default `gasPrice` and `gas` for transactions.
+
+Returns:
+```
+{
+  "gas": <Number> # Amount of gas to spend (decimal format, e.g. 100)
+  "gasPrice": <Number> # Price of gas to spend (decimal format, e.g. 100)
+}
+```
+
+## Faucets
+
+Grid+ offers a small amount of ether to authenticated customers upon request. This endpoint is only available to whitelisted devices or registered Grid+ customers and any faucet drips are recorded by Grid+ and billed after the fact at market rate if applicable.
+
+#### POST /Faucet (Authenticated)
+
+This endpoint returns a default amount of ether (0.1 ETH right now) to the requesting party if the recieving address has below a requisite amount of ether.
+
+Request:
+```
+{
+  "serial_hash": <String> # A keccak-256 hash of the serial number assigned to
+                          # the whitelisted agent
+}
+```
+
+Returns:
+```
+{
+  "result": <String> # The transaction receipt hash.
+}
+```
+
+## Getting BOLT Tokens
+
+BOLT tokens may be purchased with cryptocurrency or with a credit card.
+
+**NOTE: Because this is still an early-alpha release, only one endpoint is available that functions as a BOLT faucet.**
+
+#### POST /BuyBOLTCC (Authenticated)
+
+**NOTE: This may take up to a minute to process and may return an error regardless of success**
+
+Request:
+```
+{
+  "token": <String> # Authentication token (may also be provided as x-access-token header)
+  "recipient": <String> # OPTIONAL, receiving address if different from authenticated address
+}
+```
+
+## Billing and Usage
+
+Once a channel is opened by the client (done automatically on the official Grid+ agent client), a number of endpoints can be used to query for bills or send signatures that pay outstanding bills.
+
+#### POST /Bills
+
+Get a list of unpaid bills based on your agents consumption.
+
+Request:
+```
+{
+  "serial_hash": <String> # A keccak-256 hash of your agent's serial number
+  "all": <Boolean> # OPTIONAL, if true, include paid bills
+}
+```
+
+Returns:
+```
+{
+  "result": [
+    {
+      bill_id: <Number> # Id for reference
+      amount: <Number> # Amount of USD required to pay this bill (USD === BOLT)
+    }
+  ]
+}
+```
+
+#### POST /ChannelSum
+
+An agent may request the latest total that has been committed to the hub for a particular payment channel. For instance, if two bills worth $10 each were paid previously, the channel sum would be $20.
+
+Request:
+```
+{
+  token: <String> # Auth token, may also be sent as the x-access-token header
+  channel_id: <String> # bytes32 string of the channel id
+}
+```
+
+Response:
+```
+{
+  result: <Number> # The amount (in units of 10^-8 BOLT) currently committed to
+                   # this payment channel
+}
+```
+
+#### POST /PayBills
+
+Pay a set of bills (based on an array of `bill_id` values) with a signed message that can be checked against an open state channel. This requires a state channel to be open with the Grid+ hub.
+
+The signed message is a keccak-256 hash of the following concatenated data:
+1. Channel Id (`bytes32` value)
+2. Value (32-byte padded hex integer)
+
+Note that value is a hex integer and it should be the sum of the bills being paid for and the previous channel sum (i.e. these bills are added to the existing "tab").
+
+A decomposed ECDSA signature (producing `v`, `r`, `s` values) is required. For an example, please see the `/Authenticate` section.
+
+Request:
+```
+{
+  "bill_ids": <Array>
+  "msg": <String> # Hash of the message (see above)
+  "v": <Integer> # 27 or 28
+  "r": <String>
+  "s": <String>
+  "value": <Integer> # Amount of BOLT to be committed
+}
+```
+
+NOTE: The BOLT `value` listed above is denominated in atomic units. BOLT tokens (in their current design) have 8 decimals, which means 1 USD = 1 BOLT = 100,000,000 atomic BOLT units.
