@@ -20,7 +20,7 @@ To generate this information, call the following endpoint:
 https://app.gridplus.io:3001/SetupKey/:user
 ```
 
-**NOTE: This may take up to 2 minutes. Please be patient.**
+**NOTE: This endpoint requires two blocks to process on the Ropsten network. Depending on the network's latency, this request may time out or fail. If it does, wait ~5 minutes and try it again. Please be gentle.**
 
 `:user` can be any string you wish to use as an identifier. If you lose your setup information, you can call this endpoint to retrieve it at any time.
 
