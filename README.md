@@ -17,8 +17,10 @@ The first step is set up a simulated agent device. This consists of three pieces
 To generate this information, call the following endpoint:
 
 ```
-https://app.gridplus.io/SetupKey/:user
+https://app.gridplus.io:3001/SetupKey/:user
 ```
+
+**NOTE: This may take up to 2 minutes. Please be patient.**
 
 `:user` can be any string you wish to use as an identifier. If you lose your setup information, you can call this endpoint to retrieve it at any time.
 
