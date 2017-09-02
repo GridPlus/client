@@ -49,6 +49,7 @@ func ConnectToRPC(provider string) {
 func CheckRegistered(from string, hashed_serial string, registry string) (bool) {
   // registered(bytes32) --> 5524d548
   call := Call{From: from, To: registry, Data: "0x5524d548"+hashed_serial }
+  log.Print("Checking registration. Contract="+registry+"\tfrom="+from+"\tdata=0x5524d548"+hashed_serial)
   registered, err := client.Eth_call(call)
   if err != nil {
     log.Fatal("Could not check if agent was registered: ", err)

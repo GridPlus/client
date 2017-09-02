@@ -27,10 +27,10 @@ func writeConfigFile() {
   defer f.Close()
 
   var api = "https://app.gridplus.io:3001"
-  var rpc = "http://app.gridplus.io:8545"
+  var rpc = "https://ropsten.infura.io"
   if len(os.Args) > 1 && os.Args[1] == "dev" {
     api = "http://localhost:3000"
-    rpc = "http://localhost:8545"
+    rpc = "https://ropsten.infura.io"
   }
   dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 
