@@ -17,8 +17,10 @@ The first step is set up a simulated agent device. This consists of three pieces
 To generate this information, call the following endpoint:
 
 ```
-https://app.gridplus.io/SetupKey/:user
+https://app.gridplus.io:3001/SetupKey/:user
 ```
+
+**NOTE: This endpoint requires two blocks to process on the Ropsten network. Depending on the network's latency, this request may time out or fail. If it does, wait ~5 minutes and try it again. Please be gentle.**
 
 `:user` can be any string you wish to use as an identifier. If you lose your setup information, you can call this endpoint to retrieve it at any time.
 
