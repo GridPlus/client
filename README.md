@@ -55,7 +55,10 @@ bash run.sh
 
 Once your agent is ready, it will print `Waiting for agent to be claimed...` to your console.
 
-You will now need to generate an Ethereum wallet and determine your address. Make sure you are connected to the Ropsten network. You can either use [MyEtherWallet](https://myetherwallet.com) or connect to a local node (such as [geth](https://github.com/ethereum/go-ethereum) or [parity](https://github.com/paritytech/parity)) that is synced to the Ropsten network.
+You will now need to generate an Ethereum wallet and determine your address. **Make sure you are connected to the Ropsten network.** You can either use [MyEtherWallet](https://myetherwallet.com) or connect to a local node (such as [geth](https://github.com/ethereum/go-ethereum) or [parity](https://github.com/paritytech/parity)) that is synced to the Ropsten network.
+
+*To connect to Ropsten on MyEtherWallet, select any item with "Ropsten" in the name from the "Network" drop-down menu on the top right corner of the screen.*
+
 
 You will need to make a transaction to the Ethereum network telling the Registry contract that you own the device you are claiming.
 
