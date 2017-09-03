@@ -573,12 +573,10 @@ func (client *EthereumClient) Eth_call(_call Call) (string, error) {
 		Method:  "eth_call",
 		Params:  []interface{}{_call},
 	}
-
 	res, err := client.issueRequest(&reqBody)
 	if err != nil {
 		return "", err
 	}
-
 	var clientResp CallResponse
 	err = json.Unmarshal(res, &clientResp)
 	if err != nil {
