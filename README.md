@@ -20,9 +20,13 @@ To generate this information, call the following endpoint:
 https://app.gridplus.io:3001/SetupKey/:user
 ```
 
-**Please only call this endpoint once! If it returns an error, please wait 5 minutes before calling it again. If that fails, try a different username.**
-
 `:user` can be any string you wish to use as an identifier. If you lose your setup information, you can call this endpoint to retrieve it at any time.
+
+### Troubleshooting
+
+This endpoint makes a transaction to Ropsten asynchronously. If multiple people are generating keys simultaneously, it can quickly run into nonce issues. Your setup key information will also include a `txhash` field. Please use this on https://ropsten.etherscan.io to verify the transaction was successfully mined.
+
+*Please only call this endpoint once! If it returns an error, please wait 5 minutes before calling it again. If that fails, try a different username.*
 
 ## 2. Send your setup address some ether
 
