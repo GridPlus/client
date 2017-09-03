@@ -72,6 +72,8 @@ Next, form the data for the transaction you will send:
 
 Include this in a transaction from your Ethereum wallet and send it to the registry address provided by the Grid+ API endpoint.
 
+*If you need Ropsten ether, you can use the [Ropsten faucet](http://faucet.ropsten.be:3001/) without signing up and for free.*
+
 If the transaction is formed correctly, once it gets mined your agent should print the following to its console:
 
 ```
