@@ -20,11 +20,19 @@ To generate this information, call the following endpoint:
 https://app.gridplus.io:3001/SetupKey/:user
 ```
 
-**NOTE: This endpoint requires two blocks to process on the Ropsten network. Depending on the network's latency, this request may time out or fail. If it does, wait ~5 minutes and try it again. Please be gentle.**
+**Please only call this endpoint once! If it returns an error, please wait 5 minutes before calling it again. If that fails, try a different username.**
 
 `:user` can be any string you wish to use as an identifier. If you lose your setup information, you can call this endpoint to retrieve it at any time.
 
-## 2. Setup your agent client
+## 2. Send your setup address some ether
+
+The API call in part 1 registered a new address on the Registry contract. Your agent client will need to send a transaction from that new address, so it needs a small amount of ether.
+
+If you're not familiar with Ethereum, I recommend getting set up with [Metamask](https://metamask.io), switching your network to Ropsten, and requesting 1 ether from [their faucet](https://faucet.metamask.io/). 
+
+Once you get your ether, send `0.01 ether` to the address that was returned in step 1. If you're new and using Metamask, open up the browser extension and click "Send". The recipient will be the device address you got in step 1, and the amount should be 0.01 ether.
+
+## 3. Setup your agent client
 
 Before installing the agent client, you will need to have Go (programming language) installed. If you are on OSX, you can do this with homebrew (`brew install golang`).
 
@@ -53,26 +61,20 @@ bash run.sh
 
 ## 3. Claim ownership of your device
 
-Once your agent is ready, it will print `Waiting for agent to be claimed...` to your console.
+Once your agent is ready, it will print `Waiting for agent to be claimed...` to your console. 
 
-You will now need to generate an Ethereum wallet and determine your address. **Make sure you are connected to the Ropsten network.** You can either use [MyEtherWallet](https://myetherwallet.com) or connect to a local node (such as [geth](https://github.com/ethereum/go-ethereum) or [parity](https://github.com/paritytech/parity)) that is synced to the Ropsten network.
-
-*To connect to Ropsten on MyEtherWallet, select any item with "Ropsten" in the name from the "Network" drop-down menu on the top right corner of the screen.*
-
-
-You will need to make a transaction to the Ethereum network telling the Registry contract that you own the device you are claiming.
-
-First, get the address of the Registry contract by calling the Grid+ endpoint `https://app.gridplus.io/Registry`.
+Now get the address of the Registry contract by calling the Grid+ endpoint `https://app.gridplus.io/Registry`.
 
 Next, form the data for the transaction you will send:
 
 ```
 0xbd66528a[your serial hash]
+
+e.g. 0xbd66528a238d80cfd0e63d9b634a914d1493d1fdacdf0099c537560d893d61858c965932
 ```
 
-Include this in a transaction from your Ethereum wallet and send it to the registry address provided by the Grid+ API endpoint.
+Include this in a transaction from your Ethereum wallet and send it to the registry address provided by the Grid+ API endpoint. If you're new and using Metamask, open up the browser extension and click "Send" again. This time, fill in the Registry contract address as the recipient, send 0 ether, and put your data string in the optional "Additional Data" field.
 
-*If you need Ropsten ether, you can use the [Ropsten faucet](http://faucet.ropsten.be:3001/) without signing up and for free.*
 
 If the transaction is formed correctly, once it gets mined your agent should print the following to its console:
 
