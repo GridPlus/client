@@ -55,6 +55,8 @@ func Init() ([]string){
   check_claimed(conf.HashedSerialNo, registry_addr)
   // Authenticate the agent to use the API
   auth_token := authenticate(conf.WalletAddr, conf.WalletPkey, conf.API)
+  // Save the agent to the Grid+ API
+  save_agent(conf.HashedSerialNo, auth_token, conf.API)
 
   // Get the ether balance
   balance := rpc.EtherBalance(conf.WalletAddr)
@@ -393,4 +395,15 @@ func check_ether(needed uint64, wallet string, serial_hash string, auth_token st
     balance = rpc.EtherBalance(wallet)
     fmt.Printf("%s New balance: \x1b[32m%d\x1b[0m wei\n", DateStr(), balance)
   }
+}
+
+// Save the agent device to the Grid+ API
+// This allows Grid+ to start reading from the agent's owner's meter.
+func save_agent(serial_hash string, auth_token string, API string) {
+  success, err := api.SaveAgent(serial_hash, auth_token, API)
+  if err != nil || success != 1 {
+    log.Println("Error saving Agent to Grid+ API", err)
+    panic(err)
+  }
+  return
 }

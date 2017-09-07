@@ -17,8 +17,16 @@ type StringRes struct {
   Result string
 }
 
+type SuccessRes struct {
+  Success int
+}
+
 type FaucetReq struct {
   Addr string `json:"agent"`
+  SerialHash string `json:"serial_hash"`
+}
+
+type SaveAgentReq struct {
   SerialHash string `json:"serial_hash"`
 }
 
@@ -74,13 +82,13 @@ func GetAuthToken(address string, pkey string, API string) (string, error) {
  * @param api            Full base URI of api
  * @return               Transaction hash, error
  */
-func Faucet(serial_hash string, wallet string, auth_token string, api string) (string, error) {
+func Faucet(serial_hash string, wallet string, auth_token string, API string) (string, error) {
   payload := FaucetReq{wallet, serial_hash}
   b, _ := json.Marshal(payload)
 
   var result = new(StringRes)
   client := &http.Client{}
-  req, _ := http.NewRequest("POST", api+"/Faucet", bytes.NewBuffer(b))
+  req, _ := http.NewRequest("POST", API+"/Faucet", bytes.NewBuffer(b))
   req.Header.Set("x-access-token", auth_token)
   req.Header.Set("Content-Type", "application/json")
   res, _ := client.Do(req)
@@ -95,4 +103,37 @@ func Faucet(serial_hash string, wallet string, auth_token string, api string) (s
   }
   return result.Result, nil
 
+}
+
+/**
+ * Save the agent's serial_hash to the API to indicate it has been set up
+ * with a physical agent. At this point, Grid+ will start collecting usage
+ * data for the household.
+ *
+ * @param  serial_hash    Hash of the agent's serial number
+ * @param  auth_token     JSON-Web-Token
+ * @param  API            Base URL for the Grid+ API
+ * @return                nil for success, error for failure
+ */
+func SaveAgent(serial_hash string, auth_token string, API string) (int, error) {
+  payload := SaveAgentReq{serial_hash}
+  b, _ := json.Marshal(payload)
+
+  var result = new(SuccessRes)
+  client := &http.Client{}
+  req, _ := http.NewRequest("POST", API+"/SaveAgent", bytes.NewBuffer(b))
+  req.Header.Set("x-access-token", auth_token)
+  req.Header.Set("Content-Type", "application/json")
+  res, _ := client.Do(req)
+  body, err := ioutil.ReadAll(res.Body)
+  if err != nil {
+    return 0, fmt.Errorf("Could not read response body (%s)", err)
+  } else {
+    err2 := json.Unmarshal(body, &result)
+    if err2 != nil {
+      return 0, fmt.Errorf("Could not unmarshal body (%s)", err)
+    }
+  }
+
+  return result.Success, nil
 }
