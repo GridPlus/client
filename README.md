@@ -2,6 +2,8 @@
 
 # Grid+ Agent Client
 
+### This was an early iteration on the now Lattice1 firmware and has been deprecated. Although the firmware is not open source, please look at our [SDK](https://github.com/gridplus/gridplus-sdk) for how to integrate with a Lattice1 device.
+
 The Grid+ Agent Client is the official way to connect to the Grid+ hub and pay for your home's electricity on the agent device. The following guide allows a developer to setup the agent client. 
 
 This process is automated in production and the below guide is only relevant for the Grid+ testing environment.
